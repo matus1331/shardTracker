@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@rsl/mercy-calc": "*",
+    "@rsl/server-core": "*",
     "@tailwindcss/vite": "^4.3.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -18,6 +19,7 @@
   "devDependencies": {
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
+    "@vercel/node": "^5.8.22",
     "@vitejs/plugin-react": "^4.3.4",
     "sharp": "^0.35.3",
     "vite": "^6.0.6",

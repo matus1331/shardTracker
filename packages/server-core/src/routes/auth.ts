@@ -11,6 +11,7 @@ import {
 const SESSION_COOKIE = 'session';
 const COOKIE_OPTIONS = {
   httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax' as const,
   path: '/',
   maxAge: 60 * 60 * 24 * 30, // 30 days
@@ -34,13 +35,13 @@ export async function authRoutes(app: FastifyInstance) {
     }
 
     const trimmedUsername = username.trim();
-    if (getProfileByUsername(trimmedUsername)) {
+    if (await getProfileByUsername(trimmedUsername)) {
       return reply.code(409).send({ error: 'Toto používateľské meno je už obsadené' });
     }
 
-    const profile = createProfile(trimmedUsername, hashPassword(password as string));
+    const profile = await createProfile(trimmedUsername, hashPassword(password as string));
     const token = createSessionToken();
-    createSession(token, profile.id);
+    await createSession(token, profile.id);
     reply.setCookie(SESSION_COOKIE, token, COOKIE_OPTIONS);
 
     return { username: profile.username };
@@ -53,13 +54,13 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: 'Používateľské meno a heslo sú povinné' });
     }
 
-    const profile = getProfileByUsername(username.trim());
+    const profile = await getProfileByUsername(username.trim());
     if (!profile || !verifyPassword(password, profile.passwordHash)) {
       return reply.code(401).send({ error: 'Nesprávne používateľské meno alebo heslo' });
     }
 
     const token = createSessionToken();
-    createSession(token, profile.id);
+    await createSession(token, profile.id);
     reply.setCookie(SESSION_COOKIE, token, COOKIE_OPTIONS);
 
     return { username: profile.username };
@@ -68,7 +69,7 @@ export async function authRoutes(app: FastifyInstance) {
   app.post('/api/auth/logout', async (request, reply) => {
     const token = request.cookies[SESSION_COOKIE];
     if (token) {
-      deleteSession(token);
+      await deleteSession(token);
     }
     reply.clearCookie(SESSION_COOKIE, { path: '/' });
     return { ok: true };
@@ -78,7 +79,7 @@ export async function authRoutes(app: FastifyInstance) {
     if (!request.profileId) {
       return reply.code(401).send({ error: 'Neprihlásený' });
     }
-    const profile = getProfileById(request.profileId);
+    const profile = await getProfileById(request.profileId);
     if (!profile) {
       return reply.code(401).send({ error: 'Neprihlásený' });
     }

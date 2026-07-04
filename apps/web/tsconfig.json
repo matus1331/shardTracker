@@ -5,5 +5,5 @@
     "jsx": "react-jsx",
     "noEmit": true
   },
-  "include": ["src"]
+  "include": ["src", "api", "../../packages/server-core/src/fastify-augment.d.ts"]
 }

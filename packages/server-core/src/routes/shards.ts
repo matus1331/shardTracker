@@ -18,7 +18,7 @@ export async function shardRoutes(app: FastifyInstance) {
   });
 
   app.get('/api/shards', async (request) => {
-    return getAllCounters(request.profileId!).map(withChance);
+    return (await getAllCounters(request.profileId!)).map(withChance);
   });
 
   app.post<{ Params: { shardType: string }; Body: { amount?: number; gotDrop?: boolean } }>(
@@ -34,7 +34,7 @@ export async function shardRoutes(app: FastifyInstance) {
         return reply.code(400).send({ error: 'amount must be an integer >= 1' });
       }
 
-      const updated = addShards(request.profileId!, shardType, amount as number, gotDrop);
+      const updated = await addShards(request.profileId!, shardType, amount as number, gotDrop);
       return withChance(updated);
     },
   );
@@ -52,7 +52,7 @@ export async function shardRoutes(app: FastifyInstance) {
         return reply.code(400).send({ error: 'value must be an integer >= 0' });
       }
 
-      const updated = correctSinceLastDrop(request.profileId!, shardType, value as number, gotDrop);
+      const updated = await correctSinceLastDrop(request.profileId!, shardType, value as number, gotDrop);
       return withChance(updated);
     },
   );
