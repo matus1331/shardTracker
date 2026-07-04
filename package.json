@@ -6,6 +6,7 @@
     "apps/*"
   ],
   "scripts": {
+    "postinstall": "npm run build -w @rsl/mercy-calc -w @rsl/server-core",
     "dev": "concurrently -n server,web -c blue,green \"npm run dev -w @rsl/server\" \"npm run dev -w @rsl/web\"",
     "dev:server": "npm run dev -w @rsl/server",
     "dev:web": "npm run dev -w @rsl/web",
