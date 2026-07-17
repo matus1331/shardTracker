@@ -13,7 +13,7 @@ function withChance(row: ShardCounterRow) {
 export async function shardRoutes(app: FastifyInstance) {
   app.addHook('preHandler', async (request, reply) => {
     if (!request.profileId) {
-      return reply.code(401).send({ error: 'Neprihlásený' });
+      return reply.code(401).send({ error: 'Nepřihlášený' });
     }
   });
 

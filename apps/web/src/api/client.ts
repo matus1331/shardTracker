@@ -4,14 +4,14 @@ import type { ShardCounterState } from '../types';
 async function handleResponse(res: Response): Promise<ShardCounterState> {
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(body.error ?? 'Request failed');
+    throw new Error(body.error ?? 'Požadavek se nezdařil');
   }
   return res.json();
 }
 
 export function fetchShards(): Promise<ShardCounterState[]> {
   return fetch('/api/shards', { credentials: 'include' }).then((res) => {
-    if (!res.ok) throw new Error('Failed to load shard data');
+    if (!res.ok) throw new Error('Nepodařilo se načíst data o shardech');
     return res.json();
   });
 }

@@ -31,12 +31,12 @@ export async function authRoutes(app: FastifyInstance) {
     const { username, password } = request.body ?? {};
 
     if (!isValidCredentials(username, password)) {
-      return reply.code(400).send({ error: 'Používateľské meno (min. 3 znaky) a heslo (min. 4 znaky) sú povinné' });
+      return reply.code(400).send({ error: 'Uživatelské jméno (min. 3 znaky) a heslo (min. 4 znaky) jsou povinné' });
     }
 
     const trimmedUsername = username.trim();
     if (await getProfileByUsername(trimmedUsername)) {
-      return reply.code(409).send({ error: 'Toto používateľské meno je už obsadené' });
+      return reply.code(409).send({ error: 'Toto uživatelské jméno je již obsazené' });
     }
 
     const profile = await createProfile(trimmedUsername, hashPassword(password as string));
@@ -51,12 +51,12 @@ export async function authRoutes(app: FastifyInstance) {
     const { username, password } = request.body ?? {};
 
     if (typeof username !== 'string' || typeof password !== 'string') {
-      return reply.code(400).send({ error: 'Používateľské meno a heslo sú povinné' });
+      return reply.code(400).send({ error: 'Uživatelské jméno a heslo jsou povinné' });
     }
 
     const profile = await getProfileByUsername(username.trim());
     if (!profile || !verifyPassword(password, profile.passwordHash)) {
-      return reply.code(401).send({ error: 'Nesprávne používateľské meno alebo heslo' });
+      return reply.code(401).send({ error: 'Nesprávné uživatelské jméno nebo heslo' });
     }
 
     const token = createSessionToken();
@@ -77,11 +77,11 @@ export async function authRoutes(app: FastifyInstance) {
 
   app.get('/api/auth/me', async (request, reply) => {
     if (!request.profileId) {
-      return reply.code(401).send({ error: 'Neprihlásený' });
+      return reply.code(401).send({ error: 'Nepřihlášený' });
     }
     const profile = await getProfileById(request.profileId);
     if (!profile) {
-      return reply.code(401).send({ error: 'Neprihlásený' });
+      return reply.code(401).send({ error: 'Nepřihlášený' });
     }
     return { username: profile.username };
   });

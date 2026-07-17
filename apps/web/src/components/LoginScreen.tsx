@@ -70,7 +70,7 @@ export function LoginScreen() {
         await register(username, password);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Niečo sa pokazilo');
+      setError(err instanceof Error ? err.message : 'Něco se pokazilo');
     } finally {
       setSubmitting(false);
     }
@@ -81,7 +81,7 @@ export function LoginScreen() {
       <div className="mb-8 flex flex-col items-center gap-3 text-center">
         <ShardMark />
         <h1 className="text-2xl font-bold uppercase tracking-[0.2em] text-slate-100">Shard Tracker</h1>
-        <p className="text-sm text-slate-500">Mercy tracker pre Raid: Shadow Legends</p>
+        <p className="text-sm text-slate-500">Mercy tracker pro Raid: Shadow Legends</p>
       </div>
 
       <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl shadow-black/40">
@@ -96,7 +96,7 @@ export function LoginScreen() {
                 : 'border-b-2 border-transparent bg-slate-950/40 text-sm font-medium text-slate-500 hover:text-slate-300'
             }`}
           >
-            Log in
+            Přihlásit se
           </button>
           <button
             type="button"
@@ -108,14 +108,14 @@ export function LoginScreen() {
                 : 'border-b-2 border-transparent bg-slate-950/40 text-sm font-medium text-slate-500 hover:text-slate-300'
             }`}
           >
-            Create account
+            Vytvořit účet
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-6">
           <div>
             <label className="mb-1 block text-xs text-slate-400" htmlFor={usernameId}>
-              Používateľské meno
+              Uživatelské jméno
             </label>
             <input
               id={usernameId}
@@ -146,7 +146,7 @@ export function LoginScreen() {
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
                 disabled={submitting}
-                aria-label={showPassword ? 'Skryť heslo' : 'Zobraziť heslo'}
+                aria-label={showPassword ? 'Skrýt heslo' : 'Zobrazit heslo'}
                 aria-pressed={showPassword}
                 className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-slate-500 hover:text-slate-300 focus:outline-none focus-visible:text-blue-400"
               >
@@ -164,11 +164,11 @@ export function LoginScreen() {
           >
             {submitting
               ? mode === 'login'
-                ? 'Logging in…'
-                : 'Creating account…'
+                ? 'Přihlašuji…'
+                : 'Vytvářím účet…'
               : mode === 'login'
-                ? 'Log in'
-                : 'Create account'}
+                ? 'Přihlásit se'
+                : 'Vytvořit účet'}
           </button>
         </form>
       </div>

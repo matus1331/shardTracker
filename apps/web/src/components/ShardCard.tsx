@@ -46,7 +46,7 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
   );
 
   const progressCaption = mercyActive
-    ? `${data.sinceLastDrop - mercyThreshold} / ${guaranteedAt - mercyThreshold} do garancie`
+    ? `${data.sinceLastDrop - mercyThreshold} / ${guaranteedAt - mercyThreshold} do garance`
     : `${data.sinceLastDrop} / ${mercyThreshold} do mercy`;
 
   return (
@@ -65,7 +65,7 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
         <div className="flex items-baseline gap-1.5">
           <span className="text-2xl font-bold tabular-nums">{(data.currentChance * 100).toFixed(1)}%</span>
           <span className="text-[11px] whitespace-nowrap text-slate-500">
-            {mercyActive ? 'mercy aktívny' : 'aktuálna šanca'}
+            {mercyActive ? 'mercy aktivní' : 'aktuální šance'}
           </span>
         </div>
         <LifetimeStats
@@ -95,8 +95,8 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
         <button
           type="button"
           onClick={() => setEditing(true)}
-          title="Upraviť počet"
-          aria-label="Upraviť počet"
+          title="Upravit počet"
+          aria-label="Upravit počet"
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
         >
           <PencilIcon />

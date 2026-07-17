@@ -16,7 +16,7 @@ export function DropCelebrationModal({ title, onConfirm, onCancel }: DropCelebra
     try {
       await onConfirm();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Reset zlyhal');
+      setError(err instanceof Error ? err.message : 'Reset se nezdařil');
       setSubmitting(false);
     }
   };
@@ -30,7 +30,7 @@ export function DropCelebrationModal({ title, onConfirm, onCancel }: DropCelebra
         <p className="mb-2 text-3xl">🎉</p>
         <p className="mb-2 text-base font-semibold">{title}</p>
         <p className="mb-5 text-sm text-slate-400">
-          Chceš teraz vynulovať svoj Shard Tracker a začať počítať Mercy counter od nuly?
+          Chceš teď vynulovat svůj Shard Tracker a začít počítat Mercy counter od nuly?
         </p>
         {error && <p className="mb-3 text-xs text-red-400">{error}</p>}
         <div className="flex justify-center gap-2">
@@ -40,7 +40,7 @@ export function DropCelebrationModal({ title, onConfirm, onCancel }: DropCelebra
             disabled={submitting}
             className="h-9 rounded-lg border border-slate-700 bg-slate-800 px-3.5 text-slate-100 hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Zrušiť
+            Zrušit
           </button>
           <button
             type="button"
@@ -48,7 +48,7 @@ export function DropCelebrationModal({ title, onConfirm, onCancel }: DropCelebra
             disabled={submitting}
             className="h-9 rounded-lg border border-emerald-600 bg-emerald-600 px-3.5 font-medium text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {submitting ? 'Resetujem…' : 'Áno, resetovať'}
+            {submitting ? 'Resetuji…' : 'Ano, resetovat'}
           </button>
         </div>
       </div>
