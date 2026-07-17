@@ -1,6 +1,7 @@
 import { useShardData } from '../hooks/useShardData';
 import { ShardCard } from './ShardCard';
 import { UserMenu } from './UserMenu';
+import { InstallBanner } from './InstallBanner';
 
 export function Dashboard() {
   const { shards, error, logShards, correctCount, confirmDrop } = useShardData();
@@ -16,6 +17,8 @@ export function Dashboard() {
         </div>
         <UserMenu />
       </header>
+
+      <InstallBanner />
 
       {error && <p className="text-sm text-red-400">Nepodařilo se načíst data: {error}</p>}
 
