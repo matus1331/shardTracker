@@ -3,3 +3,25 @@
 body {
   @apply bg-slate-950 text-slate-100;
 }
+
+@keyframes shard-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.35));
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.55));
+    transform: scale(1.04);
+  }
+}
+
+.shard-mark {
+  animation: shard-pulse 3.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shard-mark {
+    animation: none;
+  }
+}

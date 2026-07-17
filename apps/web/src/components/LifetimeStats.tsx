@@ -10,9 +10,10 @@ export function LifetimeStats({
   dropLabel,
 }: LifetimeStatsProps) {
   return (
-    <p className="mb-4 text-xs text-slate-500">
-      Celkovo otvorených: {lifetimeOpened} · Získané{" "}
-      {dropLabel === "mythical" ? "mytiky" : "legendy"}: {lifetimeDrops}
-    </p>
+    <span className="text-right text-xs whitespace-nowrap text-slate-500 tabular-nums">
+      <b className="font-semibold text-slate-400">{lifetimeOpened}</b> otvorených ·{" "}
+      <b className="font-semibold text-slate-400">{lifetimeDrops}</b>{" "}
+      {dropLabel === "mythical" ? "mytiky" : "legendy"}
+    </span>
   );
 }
