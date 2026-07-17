@@ -21,6 +21,8 @@ export interface ShardMeta {
   /** Glow shadow for the active-mercy bar segment, applied only once it has visible fill. */
   neonGlowClass: string;
   textClass: string;
+  /** Background + text for the drop-type pill (LEGENDARY/MYTHICAL badge). */
+  pillClass: string;
   celebrationTitle: string;
   celebrationButtonLabel: string;
   celebrationButtonClass: string;
@@ -37,6 +39,7 @@ export const SHARD_META: Record<ShardType, ShardMeta> = {
     neonBgClass: "bg-blue-400",
     neonGlowClass: "shadow-[0_0_10px_2px_rgba(59,130,246,0.8)]",
     textClass: "text-blue-400",
+    pillClass: "bg-blue-500/15 text-blue-400",
     celebrationTitle: "Gratulujeme k Legende!",
     celebrationButtonLabel: "Spadlo mi lego! 🎉",
     celebrationButtonClass:
@@ -52,6 +55,7 @@ export const SHARD_META: Record<ShardType, ShardMeta> = {
     neonBgClass: "bg-violet-400",
     neonGlowClass: "shadow-[0_0_10px_2px_rgba(139,92,246,0.8)]",
     textClass: "text-violet-400",
+    pillClass: "bg-violet-500/15 text-violet-400",
     celebrationTitle: "Gratulujeme k Legende!",
     celebrationButtonLabel: "Spadlo mi lego! 🎉",
     celebrationButtonClass:
@@ -67,6 +71,7 @@ export const SHARD_META: Record<ShardType, ShardMeta> = {
     neonBgClass: "bg-[#C83232]",
     neonGlowClass: "shadow-[0_0_10px_2px_rgba(200,50,50,0.8)]",
     textClass: "text-[#C83232]",
+    pillClass: "bg-[#A30000]/15 text-[#C83232]",
     celebrationTitle: "Gratulujeme k Mytickému šampiónovi!",
     celebrationButtonLabel: "Spadol mi mytický šampión! 🎉",
     celebrationButtonClass:
@@ -82,6 +87,7 @@ export const SHARD_META: Record<ShardType, ShardMeta> = {
     neonBgClass: "bg-amber-300",
     neonGlowClass: "shadow-[0_0_10px_2px_rgba(245,158,11,0.8)]",
     textClass: "text-amber-400",
+    pillClass: "bg-amber-400/15 text-amber-400",
     celebrationTitle: "Gratulujeme k Legende!",
     celebrationButtonLabel: "Spadlo mi lego! 🎉",
     celebrationButtonClass:
@@ -97,6 +103,7 @@ export const SHARD_META: Record<ShardType, ShardMeta> = {
     neonBgClass: "bg-[#C83232]",
     neonGlowClass: "shadow-[0_0_10px_2px_rgba(200,50,50,0.8)]",
     textClass: "text-[#C83232]",
+    pillClass: "bg-[#A30000]/15 text-[#C83232]",
     celebrationTitle: "Gratulujeme k Mytickému šampiónovi!",
     celebrationButtonLabel: "Spadol mi mytický šampión! 🎉",
     celebrationButtonClass:

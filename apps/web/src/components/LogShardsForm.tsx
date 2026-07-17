@@ -47,7 +47,7 @@ export function LogShardsForm({ shardType, maxAmount, onSubmit }: LogShardsFormP
           min={1}
           max={maxAmount}
           step={1}
-          placeholder="Počet otvorených"
+          placeholder="Počet"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           disabled={submitting}
