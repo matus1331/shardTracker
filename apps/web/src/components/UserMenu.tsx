@@ -72,7 +72,7 @@ export function UserMenu() {
             className="flex w-full items-center gap-2 border-none bg-transparent px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-800 hover:text-red-300"
           >
             <LogoutIcon />
-            Odhlásiť sa
+            Odhlásit se
           </button>
         </div>
       )}

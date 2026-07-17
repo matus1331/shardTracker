@@ -14,7 +14,7 @@ export default defineConfig({
       manifest: {
         name: 'RSL Shard Tracker',
         short_name: 'Shard Tracker',
-        description: 'Sledovanie mercy progress a šance na drop pre shardy v Raid: Shadow Legends',
+        description: 'Sledování mercy progressu a šance na drop pro shardy v Raid: Shadow Legends',
         start_url: '/',
         scope: '/',
         display: 'standalone',

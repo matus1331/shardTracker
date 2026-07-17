@@ -5,7 +5,7 @@ export interface AuthUser {
 async function handleAuthResponse(res: Response): Promise<AuthUser> {
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(body.error ?? 'Požiadavka zlyhala');
+    throw new Error(body.error ?? 'Požadavek se nezdařil');
   }
   return res.json();
 }

@@ -27,7 +27,7 @@ export function EditCountModal({ shardType, currentValue, dropFlagLabel, onClose
       await onSubmit(shardType, parsed, gotDrop);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Úprava zlyhala');
+      setError(err instanceof Error ? err.message : 'Úprava se nezdařila');
       setSubmitting(false);
     }
   };
@@ -38,7 +38,7 @@ export function EditCountModal({ shardType, currentValue, dropFlagLabel, onClose
         className="w-72 rounded-xl border border-slate-700 bg-slate-900 p-5"
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="mb-3 text-sm font-semibold">Upraviť počet od posledného dropu</p>
+        <p className="mb-3 text-sm font-semibold">Upravit počet od posledního dropu</p>
         <form onSubmit={handleSubmit}>
           <input
             type="number"
@@ -68,14 +68,14 @@ export function EditCountModal({ shardType, currentValue, dropFlagLabel, onClose
               disabled={submitting}
               className="h-9 rounded-lg border border-slate-700 bg-slate-800 px-3.5 text-slate-100 hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Zrušiť
+              Zrušit
             </button>
             <button
               type="submit"
               disabled={!isValid || submitting}
               className="h-9 rounded-lg border border-slate-700 bg-slate-800 px-3.5 text-slate-100 hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {submitting ? 'Ukladám…' : 'Uložiť'}
+              {submitting ? 'Ukládám…' : 'Uložit'}
             </button>
           </div>
         </form>

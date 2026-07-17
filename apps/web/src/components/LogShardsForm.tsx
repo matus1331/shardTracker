@@ -25,7 +25,7 @@ export function LogShardsForm({ shardType, maxAmount, onSubmit }: LogShardsFormP
       await onSubmit(shardType, parsed, false);
       setAmount('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Zápis zlyhal');
+      setError(err instanceof Error ? err.message : 'Zápis se nezdařil');
     } finally {
       setSubmitting(false);
     }
@@ -34,7 +34,7 @@ export function LogShardsForm({ shardType, maxAmount, onSubmit }: LogShardsFormP
   if (maxAmount < 1) {
     return (
       <p className="text-xs text-slate-400">
-        Dosiahnutá garantovaná šanca — zaznamenaj drop pred ďalším otváraním.
+        Dosažena garantovaná šance — zaznamenej drop před dalším otevíráním.
       </p>
     );
   }
@@ -58,7 +58,7 @@ export function LogShardsForm({ shardType, maxAmount, onSubmit }: LogShardsFormP
           disabled={!isValid || submitting}
           className="h-9 shrink-0 rounded-lg border border-slate-700 bg-slate-800 px-3.5 text-slate-100 hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {submitting ? 'Ukladám…' : 'Zapísať'}
+          {submitting ? 'Ukládám…' : 'Zapsat'}
         </button>
       </div>
       {exceedsMax && (
