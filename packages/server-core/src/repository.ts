@@ -92,12 +92,13 @@ export async function correctSinceLastDrop(
     const beforeRs = await tx.execute({ sql: SELECT_COUNTER_SQL, args: [profileId, shardType] });
     const before = toShardCounterRow(beforeRs.rows[0] as unknown as RawCounterRow);
     const after = gotDrop ? 0 : value;
+    const lifetimeDelta = value - before.sinceLastDrop;
 
     await tx.execute({
       sql: `UPDATE shard_counters
-            SET since_last_drop = ?, lifetime_drops = lifetime_drops + ?, updated_at = datetime('now')
+            SET since_last_drop = ?, lifetime_opened = lifetime_opened + ?, lifetime_drops = lifetime_drops + ?, updated_at = datetime('now')
             WHERE profile_id = ? AND shard_type = ?`,
-      args: [after, gotDrop ? 1 : 0, profileId, shardType],
+      args: [after, lifetimeDelta, gotDrop ? 1 : 0, profileId, shardType],
     });
 
     await tx.execute({
