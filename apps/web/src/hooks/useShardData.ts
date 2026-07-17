@@ -28,10 +28,14 @@ export function useShardData() {
     setShards((prev) => prev?.map((s) => (s.shardType === shardType ? updated : s)) ?? prev);
   }, []);
 
-  const confirmDrop = useCallback(async (shardType: ShardType) => {
-    const updated = await correctSinceLastDrop(shardType, 0, true);
-    setShards((prev) => prev?.map((s) => (s.shardType === shardType ? updated : s)) ?? prev);
-  }, []);
+  const confirmDrop = useCallback(
+    async (shardType: ShardType) => {
+      const current = shards?.find((s) => s.shardType === shardType);
+      const updated = await correctSinceLastDrop(shardType, current?.sinceLastDrop ?? 0, true);
+      setShards((prev) => prev?.map((s) => (s.shardType === shardType ? updated : s)) ?? prev);
+    },
+    [shards],
+  );
 
   return { shards, error, logShards, correctCount, confirmDrop, reload: load };
 }
