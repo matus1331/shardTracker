@@ -5,6 +5,17 @@ Personal web app for manually logging shard openings in *Raid: Shadow Legends* a
 Live: https://shard-tracker-web.vercel.app/
 Repo: git@github.com:matus1331/shardTracker.git (branch `main`, Vercel auto-deploys on push)
 
+## Localization
+
+The app targets the **Czech market** — all user-facing text is Czech, not Slovak or English. This applies to every new page, component, or feature:
+
+- Frontend copy (labels, buttons, headings, placeholders, empty/loading states, toasts).
+- Error messages returned by the backend (`packages/server-core/src/routes/*.ts`) — these surface directly in the UI (e.g. login/register errors), so they must be proper Czech too, not just Slovak with a mismatched `lang` attribute.
+- `apps/web/index.html` `<html lang="cs">` and the `vite-plugin-pwa` manifest `description` (`vite.config.ts`) must stay in Czech and in sync with this.
+- Use real Czech wording, not a 1:1 Slovak-diacritics swap (e.g. "Uživatelské jméno" not "Používateľské meno", "Odhlásit se" not "Odhlásiť sa", "Nepřihlášený" not "Neprihlásený") — when unsure, check existing strings in `apps/web/src/components/*.tsx` and `apps/web/src/types.ts` (`SHARD_META`) for the established tone/vocabulary.
+- Exceptions that stay as-is: the "Shard Tracker" brand name/wordmark, and in-game rarity terms shown verbatim from the game (`legendary`/`mythical` pills, driven by `SHARD_META.dropLabel`) — these are canonical game terms, not translatable UI copy.
+- Internal API validation guard messages that never reach a normal UI flow (e.g. `shards.ts`'s `'Invalid shardType'`, `'amount must be an integer >= 1'`) can stay in English — they're programmer-facing contract errors, not product copy.
+
 ## Tech stack
 
 - **Frontend**: React 18 + TypeScript + Vite, Tailwind CSS v4, `vite-plugin-pwa`.
