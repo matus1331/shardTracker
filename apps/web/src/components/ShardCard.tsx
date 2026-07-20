@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ShardType } from '@rsl/mercy-calc';
-import { getMercyProgress } from '@rsl/mercy-calc';
+import { getMercyProgress, MERCY_CONFIGS } from '@rsl/mercy-calc';
 import type { ShardCounterState } from '../types';
 import { SHARD_META } from '../types';
 import { MercyProgressBar } from './MercyProgressBar';
@@ -8,6 +8,7 @@ import { LifetimeStats } from './LifetimeStats';
 import { LogShardsForm } from './LogShardsForm';
 import { EditCountModal } from './EditCountModal';
 import { DropCelebrationModal } from './DropCelebrationModal';
+import { formatEventCountdown } from '../utils/formatEventCountdown';
 
 interface ShardCardProps {
   data: ShardCounterState;
@@ -43,27 +44,48 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
   const { mercyThreshold, guaranteedAt, mercyActive, preMercyProgress, mercyProgress } = getMercyProgress(
     data.shardType,
     data.sinceLastDrop,
+    { multiplier: data.activeEvent?.multiplier ?? 1 },
   );
 
   const progressCaption = mercyActive
     ? `${data.sinceLastDrop - mercyThreshold} / ${guaranteedAt - mercyThreshold} do garance`
     : `${data.sinceLastDrop} / ${mercyThreshold} do mercy`;
 
+  const baseChancePct = (MERCY_CONFIGS[data.shardType].baseChance * 100).toFixed(1);
+  const currentChancePct = (data.currentChance * 100).toFixed(1);
+
   return (
-    <div className={`rounded-xl border border-slate-800 border-l-[3px] bg-slate-900 p-4 ${meta.borderClass}`}>
+    <div
+      className={`rounded-xl border border-slate-800 border-l-[3px] bg-slate-900 p-4 ${meta.borderClass} ${
+        data.activeEvent ? 'ring-1 ring-amber-400/40' : ''
+      }`}
+    >
       <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-2 text-[13px] font-semibold">
           <span className={`inline-block h-2 w-2 shrink-0 rounded-full ${meta.dotClass}`} />
           <span>{meta.label}</span>
         </div>
-        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase ${meta.pillClass}`}>
-          {meta.dropLabel}
-        </span>
+        <div className="flex items-center gap-1.5">
+          {data.activeEvent && (
+            <span className="animate-pulse rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 px-2 py-0.5 text-[10px] font-bold tracking-wide text-slate-900 shadow-[0_0_8px_1px_rgba(251,191,36,0.6)] motion-reduce:animate-none">
+              ⚡ 2×
+            </span>
+          )}
+          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase ${meta.pillClass}`}>
+            {meta.dropLabel}
+          </span>
+        </div>
       </div>
 
       <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
         <div className="flex items-baseline gap-1.5">
-          <span className="text-2xl font-bold tabular-nums">{(data.currentChance * 100).toFixed(1)}%</span>
+          {data.activeEvent && (
+            <>
+              <span className="text-sm text-slate-500 line-through tabular-nums">{baseChancePct}%</span>
+              <span className="text-sm text-slate-500">→</span>
+            </>
+          )}
+          <span className="text-2xl font-bold tabular-nums">{currentChancePct}%</span>
           <span className="text-[11px] whitespace-nowrap text-slate-500">
             {mercyActive ? 'mercy aktivní' : 'aktuální šance'}
           </span>
@@ -85,7 +107,10 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
           neonBgClass={meta.neonBgClass}
           neonGlowClass={meta.neonGlowClass}
         />
-        <div className="mt-1 text-right text-[11px] text-slate-500 tabular-nums">{progressCaption}</div>
+        <div className="mt-1 flex items-center justify-between text-[11px] tabular-nums">
+          <span className="text-amber-400">{data.activeEvent ? formatEventCountdown(data.activeEvent.endDate) : ''}</span>
+          <span className="text-slate-500">{progressCaption}</span>
+        </div>
       </div>
 
       <div className="flex items-start gap-2">
