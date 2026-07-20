@@ -1,11 +1,18 @@
 import type { ShardType } from "@rsl/mercy-calc";
 
+export interface ActiveMercyEvent {
+  multiplier: number;
+  endDate: string;
+  label: string | null;
+}
+
 export interface ShardCounterState {
   shardType: ShardType;
   sinceLastDrop: number;
   lifetimeOpened: number;
   lifetimeDrops: number;
   currentChance: number;
+  activeEvent: ActiveMercyEvent | null;
 }
 
 export interface ShardMeta {
