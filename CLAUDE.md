@@ -58,7 +58,7 @@ No `.env` needed locally — `packages/server-core/src/db.ts` defaults `DATABASE
 ## Deployment
 
 - **Vercel project**: Root Directory = `apps/web`. Requires **"Include source files outside of the Root Directory in the Build Step"** enabled (Project Settings → General) since `apps/web/api/server.ts` imports `packages/server-core`, which lives outside `apps/web`.
-- **Env vars** (Vercel → Settings → Environment Variables, Production + Preview): `DATABASE_URL` (`libsql://...` from `turso db show <name> --url`), `DATABASE_AUTH_TOKEN` (from `turso db tokens create <name>`).
+- **Env vars** (Vercel → Settings → Environment Variables, Production + Preview): `DATABASE_URL` (`libsql://...` from `turso db show <name> --url`), `DATABASE_AUTH_TOKEN` (from `turso db tokens create <name>`), `ADMIN_USERNAME` (the one profile username allowed to schedule 2x events — compared as a plain string, no DB column involved).
 - Push to `main` → Vercel auto-builds and deploys.
 
 ## Gotchas discovered the hard way (read before touching deploy config)

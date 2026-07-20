@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { createSessionToken, hashPassword, verifyPassword } from '../auth.js';
+import { isAdminUsername } from '../admin.js';
 import {
   createProfile,
   createSession,
@@ -44,7 +45,7 @@ export async function authRoutes(app: FastifyInstance) {
     await createSession(token, profile.id);
     reply.setCookie(SESSION_COOKIE, token, COOKIE_OPTIONS);
 
-    return { username: profile.username };
+    return { username: profile.username, isAdmin: isAdminUsername(profile.username) };
   });
 
   app.post<{ Body: { username?: string; password?: string } }>('/api/auth/login', async (request, reply) => {
@@ -63,7 +64,7 @@ export async function authRoutes(app: FastifyInstance) {
     await createSession(token, profile.id);
     reply.setCookie(SESSION_COOKIE, token, COOKIE_OPTIONS);
 
-    return { username: profile.username };
+    return { username: profile.username, isAdmin: isAdminUsername(profile.username) };
   });
 
   app.post('/api/auth/logout', async (request, reply) => {
@@ -83,7 +84,7 @@ export async function authRoutes(app: FastifyInstance) {
     if (!profile) {
       return reply.code(401).send({ error: 'Nepřihlášený' });
     }
-    return { username: profile.username };
+    return { username: profile.username, isAdmin: isAdminUsername(profile.username) };
   });
 }
 
