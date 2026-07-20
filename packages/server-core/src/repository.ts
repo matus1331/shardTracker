@@ -197,3 +197,93 @@ export async function getProfileIdBySessionToken(token: string): Promise<number 
 export async function deleteSession(token: string): Promise<void> {
   await client.execute({ sql: `DELETE FROM sessions WHERE token = ?`, args: [token] });
 }
+
+export interface MercyEventRow {
+  id: number;
+  groupId: string;
+  shardType: ShardType;
+  startDate: string;
+  endDate: string;
+  multiplier: number;
+  label: string | null;
+}
+
+interface RawMercyEventRow {
+  id: number;
+  group_id: string;
+  shard_type: ShardType;
+  start_date: string;
+  end_date: string;
+  multiplier: number;
+  label: string | null;
+}
+
+function toMercyEventRow(row: RawMercyEventRow): MercyEventRow {
+  return {
+    id: Number(row.id),
+    groupId: row.group_id,
+    shardType: row.shard_type,
+    startDate: row.start_date,
+    endDate: row.end_date,
+    multiplier: Number(row.multiplier),
+    label: row.label,
+  };
+}
+
+const MERCY_EVENT_COLUMNS = 'id, group_id, shard_type, start_date, end_date, multiplier, label';
+
+export async function listMercyEvents(): Promise<MercyEventRow[]> {
+  const rs = await client.execute(
+    `SELECT ${MERCY_EVENT_COLUMNS} FROM mercy_events ORDER BY start_date DESC, id DESC`,
+  );
+  return (rs.rows as unknown as RawMercyEventRow[]).map(toMercyEventRow);
+}
+
+/**
+ * Returns the currently-active event (if any) per shard type. If two events for the
+ * same shard type overlap today (not expected in normal admin use), the
+ * most-recently-created one wins.
+ */
+export async function getActiveMercyEvents(shardTypes: ShardType[]): Promise<Map<ShardType, MercyEventRow>> {
+  const placeholders = shardTypes.map(() => '?').join(', ');
+  const rs = await client.execute({
+    sql: `SELECT ${MERCY_EVENT_COLUMNS} FROM mercy_events
+          WHERE shard_type IN (${placeholders}) AND start_date <= date('now') AND end_date >= date('now')
+          ORDER BY id DESC`,
+    args: shardTypes,
+  });
+  const map = new Map<ShardType, MercyEventRow>();
+  for (const raw of rs.rows as unknown as RawMercyEventRow[]) {
+    const row = toMercyEventRow(raw);
+    if (!map.has(row.shardType)) map.set(row.shardType, row);
+  }
+  return map;
+}
+
+export async function createMercyEvent(
+  shardTypes: ShardType[],
+  startDate: string,
+  endDate: string,
+  label: string | null,
+): Promise<string> {
+  const groupId = randomUUID();
+  const tx = await client.transaction('write');
+  try {
+    for (const shardType of shardTypes) {
+      await tx.execute({
+        sql: `INSERT INTO mercy_events (group_id, shard_type, start_date, end_date, multiplier, label)
+              VALUES (?, ?, ?, ?, 2.0, ?)`,
+        args: [groupId, shardType, startDate, endDate, label],
+      });
+    }
+    await tx.commit();
+    return groupId;
+  } catch (err) {
+    await tx.rollback();
+    throw err;
+  }
+}
+
+export async function deleteMercyEventGroup(groupId: string): Promise<void> {
+  await client.execute({ sql: `DELETE FROM mercy_events WHERE group_id = ?`, args: [groupId] });
+}
