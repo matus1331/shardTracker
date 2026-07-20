@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { SHARD_TYPES, type ShardType } from '@rsl/mercy-calc';
 import { client } from './db.js';
 
