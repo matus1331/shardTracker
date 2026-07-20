@@ -27,6 +27,8 @@ export interface ShardMeta {
   neonBgClass: string;
   /** Glow shadow for the active-mercy bar segment, applied only once it has visible fill. */
   neonGlowClass: string;
+  /** Stronger border + glow shown around the whole card while a 2x event is active for this shard — color-matched to the shard, mirroring the game's portal glow. */
+  eventAccentClass: string;
   textClass: string;
   /** Background + text for the drop-type pill (LEGENDARY/MYTHICAL badge). */
   pillClass: string;
@@ -45,6 +47,7 @@ export const SHARD_META: Record<ShardType, ShardMeta> = {
     fillClass: "bg-blue-500",
     neonBgClass: "bg-blue-400",
     neonGlowClass: "shadow-[0_0_10px_2px_rgba(59,130,246,0.8)]",
+    eventAccentClass: "border-blue-400 shadow-[0_0_18px_3px_rgba(59,130,246,0.5)]",
     textClass: "text-blue-400",
     pillClass: "bg-blue-500/15 text-blue-400",
     celebrationTitle: "Gratulujeme k Legendě!",
@@ -61,6 +64,7 @@ export const SHARD_META: Record<ShardType, ShardMeta> = {
     fillClass: "bg-violet-500",
     neonBgClass: "bg-violet-400",
     neonGlowClass: "shadow-[0_0_10px_2px_rgba(139,92,246,0.8)]",
+    eventAccentClass: "border-violet-400 shadow-[0_0_18px_3px_rgba(139,92,246,0.5)]",
     textClass: "text-violet-400",
     pillClass: "bg-violet-500/15 text-violet-400",
     celebrationTitle: "Gratulujeme k Legendě!",
@@ -77,6 +81,7 @@ export const SHARD_META: Record<ShardType, ShardMeta> = {
     fillClass: "bg-[#A30000]",
     neonBgClass: "bg-[#C83232]",
     neonGlowClass: "shadow-[0_0_10px_2px_rgba(200,50,50,0.8)]",
+    eventAccentClass: "border-[#C83232] shadow-[0_0_18px_3px_rgba(200,50,50,0.5)]",
     textClass: "text-[#C83232]",
     pillClass: "bg-[#A30000]/15 text-[#C83232]",
     celebrationTitle: "Gratulujeme k mytickému šampionovi!",
@@ -93,6 +98,7 @@ export const SHARD_META: Record<ShardType, ShardMeta> = {
     fillClass: "bg-amber-400",
     neonBgClass: "bg-amber-300",
     neonGlowClass: "shadow-[0_0_10px_2px_rgba(245,158,11,0.8)]",
+    eventAccentClass: "border-amber-300 shadow-[0_0_18px_3px_rgba(245,158,11,0.5)]",
     textClass: "text-amber-400",
     pillClass: "bg-amber-400/15 text-amber-400",
     celebrationTitle: "Gratulujeme k Legendě!",
@@ -109,6 +115,7 @@ export const SHARD_META: Record<ShardType, ShardMeta> = {
     fillClass: "bg-[#A30000]",
     neonBgClass: "bg-[#C83232]",
     neonGlowClass: "shadow-[0_0_10px_2px_rgba(200,50,50,0.8)]",
+    eventAccentClass: "border-[#C83232] shadow-[0_0_18px_3px_rgba(200,50,50,0.5)]",
     textClass: "text-[#C83232]",
     pillClass: "bg-[#A30000]/15 text-[#C83232]",
     celebrationTitle: "Gratulujeme k mytickému šampionovi!",

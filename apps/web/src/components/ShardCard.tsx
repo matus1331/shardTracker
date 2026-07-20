@@ -56,8 +56,8 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
 
   return (
     <div
-      className={`rounded-xl border border-slate-800 border-l-[3px] bg-slate-900 p-4 ${meta.borderClass} ${
-        data.activeEvent ? 'ring-1 ring-amber-400/40' : ''
+      className={`rounded-xl bg-slate-900 p-4 ${
+        data.activeEvent ? `border-2 ${meta.eventAccentClass}` : `border border-slate-800 border-l-[3px] ${meta.borderClass}`
       }`}
     >
       <div className="mb-2 flex items-center justify-between">
