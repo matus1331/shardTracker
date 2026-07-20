@@ -2,6 +2,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import cookie from '@fastify/cookie';
 import { shardRoutes } from './routes/shards.js';
 import { authRoutes, SESSION_COOKIE } from './routes/auth.js';
+import { eventRoutes } from './routes/events.js';
 import { getProfileIdBySessionToken } from './repository.js';
 import './db.js';
 
@@ -19,6 +20,7 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   await app.register(authRoutes);
   await app.register(shardRoutes);
+  await app.register(eventRoutes);
 
   return app;
 }
