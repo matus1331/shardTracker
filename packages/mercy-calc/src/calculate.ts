@@ -13,21 +13,30 @@ function round(value: number): number {
   return Math.round(value * 1e6) / 1e6;
 }
 
+export interface MercyOptions {
+  /** Multiplies baseChance only (e.g. an active 2x event). Defaults to 1 (no change). */
+  multiplier?: number;
+}
+
+function effectiveBaseChance(config: MercyConfig, options?: MercyOptions): number {
+  return config.baseChance * (options?.multiplier ?? 1);
+}
+
 /**
  * Chance grows by `bonusPerShard` for every shard opened past `mercyThreshold`
  * (e.g. Void: still base chance at 200 opened, +5% at 201, +10% at 202, ...).
  */
-export function calculateDropChance(shardType: ShardType, sinceLastDrop: number): number {
+export function calculateDropChance(shardType: ShardType, sinceLastDrop: number, options?: MercyOptions): number {
   const config = MERCY_CONFIGS[shardType];
   const shardsPastThreshold = Math.max(0, sinceLastDrop - config.mercyThreshold);
-  const chance = config.baseChance + shardsPastThreshold * config.bonusPerShard;
+  const chance = effectiveBaseChance(config, options) + shardsPastThreshold * config.bonusPerShard;
   return round(Math.min(chance, config.maxChance));
 }
 
 /** Shard count (since last drop) at which the chance first reaches maxChance. */
-export function getGuaranteedAt(shardType: ShardType): number {
+export function getGuaranteedAt(shardType: ShardType, options?: MercyOptions): number {
   const config = MERCY_CONFIGS[shardType];
-  const shardsNeeded = Math.ceil((config.maxChance - config.baseChance) / config.bonusPerShard);
+  const shardsNeeded = Math.ceil((config.maxChance - effectiveBaseChance(config, options)) / config.bonusPerShard);
   return config.mercyThreshold + shardsNeeded;
 }
 
@@ -42,9 +51,9 @@ export interface MercyProgress {
   mercyProgress: number;
 }
 
-export function getMercyProgress(shardType: ShardType, sinceLastDrop: number): MercyProgress {
+export function getMercyProgress(shardType: ShardType, sinceLastDrop: number, options?: MercyOptions): MercyProgress {
   const config = MERCY_CONFIGS[shardType];
-  const guaranteedAt = getGuaranteedAt(shardType);
+  const guaranteedAt = getGuaranteedAt(shardType, options);
   const mercyActive = sinceLastDrop >= config.mercyThreshold;
   const mercyRange = guaranteedAt - config.mercyThreshold;
 
