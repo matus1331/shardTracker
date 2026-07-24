@@ -2,7 +2,8 @@ import type { ShardType } from "@rsl/mercy-calc";
 
 export interface ActiveMercyEvent {
   multiplier: number;
-  endDate: string;
+  /** ISO 8601 UTC datetime, e.g. '2026-07-27T08:00:00Z'. */
+  endAt: string;
   label: string | null;
 }
 

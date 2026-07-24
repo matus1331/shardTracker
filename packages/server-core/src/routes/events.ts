@@ -9,8 +9,12 @@ function isSupportedEventShardType(value: unknown): value is ShardType {
   return typeof value === 'string' && (SUPPORTED_EVENT_SHARD_TYPES as string[]).includes(value);
 }
 
-function isIsoDate(value: unknown): value is string {
-  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+/** UTC ISO 8601 datetime, e.g. '2026-07-24T08:00:00Z'. Also rejects calendar-invalid dates (e.g. month 13). */
+function isIsoDateTime(value: unknown): value is string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(value)) {
+    return false;
+  }
+  return !Number.isNaN(Date.parse(value));
 }
 
 export async function eventRoutes(app: FastifyInstance) {
@@ -28,10 +32,10 @@ export async function eventRoutes(app: FastifyInstance) {
     return listMercyEvents();
   });
 
-  app.post<{ Body: { shardTypes?: unknown[]; startDate?: string; endDate?: string; label?: string } }>(
+  app.post<{ Body: { shardTypes?: unknown[]; startAt?: string; endAt?: string; label?: string } }>(
     '/api/events',
     async (request, reply) => {
-      const { shardTypes, startDate, endDate, label } = request.body ?? {};
+      const { shardTypes, startAt, endAt, label } = request.body ?? {};
 
       if (!Array.isArray(shardTypes) || shardTypes.length === 0) {
         return reply.code(400).send({ error: 'Vyber alespoň jeden shard' });
@@ -41,11 +45,13 @@ export async function eventRoutes(app: FastifyInstance) {
           return reply.code(400).send({ error: 'Neplatný typ shardu pro 2x event' });
         }
       }
-      if (!isIsoDate(startDate) || !isIsoDate(endDate) || startDate > endDate) {
-        return reply.code(400).send({ error: 'Datum od musí předcházet datu do (formát YYYY-MM-DD)' });
+      if (!isIsoDateTime(startAt) || !isIsoDateTime(endAt) || Date.parse(startAt) >= Date.parse(endAt)) {
+        return reply
+          .code(400)
+          .send({ error: 'Začátek musí předcházet konci (formát ISO 8601 UTC, např. 2026-07-24T08:00:00Z)' });
       }
 
-      const groupId = await createMercyEvent(shardTypes as ShardType[], startDate, endDate, label?.trim() || null);
+      const groupId = await createMercyEvent(shardTypes as ShardType[], startAt, endAt, label?.trim() || null);
       return { groupId };
     },
   );

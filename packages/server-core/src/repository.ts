@@ -202,8 +202,8 @@ export interface MercyEventRow {
   id: number;
   groupId: string;
   shardType: ShardType;
-  startDate: string;
-  endDate: string;
+  startAt: string;
+  endAt: string;
   multiplier: number;
   label: string | null;
 }
@@ -212,8 +212,8 @@ interface RawMercyEventRow {
   id: number;
   group_id: string;
   shard_type: ShardType;
-  start_date: string;
-  end_date: string;
+  start_at: string;
+  end_at: string;
   multiplier: number;
   label: string | null;
 }
@@ -223,32 +223,34 @@ function toMercyEventRow(row: RawMercyEventRow): MercyEventRow {
     id: Number(row.id),
     groupId: row.group_id,
     shardType: row.shard_type,
-    startDate: row.start_date,
-    endDate: row.end_date,
+    startAt: row.start_at,
+    endAt: row.end_at,
     multiplier: Number(row.multiplier),
     label: row.label,
   };
 }
 
-const MERCY_EVENT_COLUMNS = 'id, group_id, shard_type, start_date, end_date, multiplier, label';
+const MERCY_EVENT_COLUMNS = 'id, group_id, shard_type, start_at, end_at, multiplier, label';
 
 export async function listMercyEvents(): Promise<MercyEventRow[]> {
   const rs = await client.execute(
-    `SELECT ${MERCY_EVENT_COLUMNS} FROM mercy_events ORDER BY start_date DESC, id DESC`,
+    `SELECT ${MERCY_EVENT_COLUMNS} FROM mercy_events ORDER BY start_at DESC, id DESC`,
   );
   return (rs.rows as unknown as RawMercyEventRow[]).map(toMercyEventRow);
 }
 
 /**
- * Returns the currently-active event (if any) per shard type. If two events for the
- * same shard type overlap today (not expected in normal admin use), the
+ * Returns the currently-active event (if any) per shard type. `datetime(...)` normalizes
+ * both the stored ISO 8601 UTC strings and SQLite's own `now` through the same parser, so
+ * exact separator/format differences don't cause false negatives. If two events for the
+ * same shard type overlap right now (not expected in normal admin use), the
  * most-recently-created one wins.
  */
 export async function getActiveMercyEvents(shardTypes: ShardType[]): Promise<Map<ShardType, MercyEventRow>> {
   const placeholders = shardTypes.map(() => '?').join(', ');
   const rs = await client.execute({
     sql: `SELECT ${MERCY_EVENT_COLUMNS} FROM mercy_events
-          WHERE shard_type IN (${placeholders}) AND start_date <= date('now') AND end_date >= date('now')
+          WHERE shard_type IN (${placeholders}) AND datetime(start_at) <= datetime('now') AND datetime(end_at) >= datetime('now')
           ORDER BY id DESC`,
     args: shardTypes,
   });
@@ -262,8 +264,8 @@ export async function getActiveMercyEvents(shardTypes: ShardType[]): Promise<Map
 
 export async function createMercyEvent(
   shardTypes: ShardType[],
-  startDate: string,
-  endDate: string,
+  startAt: string,
+  endAt: string,
   label: string | null,
 ): Promise<string> {
   const groupId = randomUUID();
@@ -271,9 +273,9 @@ export async function createMercyEvent(
   try {
     for (const shardType of shardTypes) {
       await tx.execute({
-        sql: `INSERT INTO mercy_events (group_id, shard_type, start_date, end_date, multiplier, label)
+        sql: `INSERT INTO mercy_events (group_id, shard_type, start_at, end_at, multiplier, label)
               VALUES (?, ?, ?, ?, 2.0, ?)`,
-        args: [groupId, shardType, startDate, endDate, label],
+        args: [groupId, shardType, startAt, endAt, label],
       });
     }
     await tx.commit();

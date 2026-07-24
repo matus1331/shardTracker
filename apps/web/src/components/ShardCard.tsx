@@ -108,7 +108,7 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
           neonGlowClass={meta.neonGlowClass}
         />
         <div className="mt-1 flex items-center justify-between text-[11px] tabular-nums">
-          <span className="text-amber-400">{data.activeEvent ? formatEventCountdown(data.activeEvent.endDate) : ''}</span>
+          <span className="text-amber-400">{data.activeEvent ? formatEventCountdown(data.activeEvent.endAt) : ''}</span>
           <span className="text-slate-500">{progressCaption}</span>
         </div>
       </div>

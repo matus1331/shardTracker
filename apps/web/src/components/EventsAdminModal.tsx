@@ -14,12 +14,12 @@ const EVENT_SHARD_TYPES: ShardType[] = [...LEGENDARY_SHARDS, ...MYTHICAL_SHARDS]
 interface EventGroup {
   groupId: string;
   shardTypes: ShardType[];
-  startDate: string;
-  endDate: string;
+  startAt: string;
+  endAt: string;
   label: string | null;
 }
 
-function todayIso(): string {
+function todayIsoUtc(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
@@ -33,25 +33,57 @@ function groupEvents(events: MercyEvent[]): EventGroup[] {
   return Array.from(byGroup.values()).map((rows) => ({
     groupId: rows[0].groupId,
     shardTypes: rows.map((r) => r.shardType),
-    startDate: rows[0].startDate,
-    endDate: rows[0].endDate,
+    startAt: rows[0].startAt,
+    endAt: rows[0].endAt,
     label: rows[0].label,
   }));
 }
 
-function isActiveToday(startDate: string, endDate: string): boolean {
-  const today = todayIso();
-  return startDate <= today && endDate >= today;
+function isActiveNow(startAt: string, endAt: string): boolean {
+  const now = Date.now();
+  return new Date(startAt).getTime() <= now && new Date(endAt).getTime() >= now;
+}
+
+/** Renders an ISO UTC instant as a UTC-labeled date+time, regardless of the browser's own timezone. */
+function formatUtcDateTime(iso: string): string {
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return iso;
+  const datePart = parsed.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  const timePart = parsed.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
+  return `${datePart} ${timePart} UTC`;
+}
+
+/** Renders the same ISO UTC instant in the browser's own (local) timezone, for orientation. */
+function formatLocalDateTime(iso: string): string {
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return '';
+  return parsed.toLocaleString('cs-CZ', {
+    day: 'numeric',
+    month: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function toIsoUtc(date: string, time: string): string {
+  return `${date}T${time}:00Z`;
 }
 
 export function EventsAdminModal({ onClose }: EventsAdminModalProps) {
   const [events, setEvents] = useState<MercyEvent[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<ShardType>>(new Set());
-  const [startDate, setStartDate] = useState(todayIso());
-  const [endDate, setEndDate] = useState(todayIso());
+  const [startDate, setStartDate] = useState(todayIsoUtc());
+  const [startTime, setStartTime] = useState('00:00');
+  const [endDate, setEndDate] = useState(todayIsoUtc());
+  const [endTime, setEndTime] = useState('23:59');
   const [label, setLabel] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  const startAt = toIsoUtc(startDate, startTime);
+  const endAt = toIsoUtc(endDate, endTime);
+  const rangeValid = Date.parse(startAt) < Date.parse(endAt);
 
   const load = () => {
     fetchEvents()
@@ -74,11 +106,11 @@ export function EventsAdminModal({ onClose }: EventsAdminModalProps) {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selected.size === 0 || startDate > endDate) return;
+    if (selected.size === 0 || !rangeValid) return;
     setSubmitting(true);
     setError(null);
     try {
-      await createEvent(Array.from(selected), startDate, endDate, label);
+      await createEvent(Array.from(selected), startAt, endAt, label);
       setSelected(new Set());
       setLabel('');
       load();
@@ -141,25 +173,47 @@ export function EventsAdminModal({ onClose }: EventsAdminModalProps) {
             ))}
           </div>
 
-          <div className="mb-3 flex gap-2">
-            <label className="flex-1 text-xs text-slate-400">
-              Od
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="mt-1 h-9 w-full rounded-lg border border-slate-700 bg-slate-800 px-2.5 text-slate-100 focus:border-slate-500 focus:outline-none"
-              />
-            </label>
-            <label className="flex-1 text-xs text-slate-400">
-              Do
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="mt-1 h-9 w-full rounded-lg border border-slate-700 bg-slate-800 px-2.5 text-slate-100 focus:border-slate-500 focus:outline-none"
-              />
-            </label>
+          <div className="mb-3 grid grid-cols-2 gap-2">
+            <div>
+              <p className="text-xs text-slate-400">Od (UTC)</p>
+              <div className="mt-1 flex gap-1">
+                <input
+                  type="date"
+                  aria-label="Datum od (UTC)"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="h-9 min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-800 px-2 text-slate-100 focus:border-slate-500 focus:outline-none"
+                />
+                <input
+                  type="time"
+                  aria-label="Čas od (UTC)"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="h-9 w-24 shrink-0 rounded-lg border border-slate-700 bg-slate-800 px-2 text-slate-100 focus:border-slate-500 focus:outline-none"
+                />
+              </div>
+              <p className="mt-1 text-[11px] text-slate-500">≈ {formatLocalDateTime(startAt)} tvého času</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-400">Do (UTC)</p>
+              <div className="mt-1 flex gap-1">
+                <input
+                  type="date"
+                  aria-label="Datum do (UTC)"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="h-9 min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-800 px-2 text-slate-100 focus:border-slate-500 focus:outline-none"
+                />
+                <input
+                  type="time"
+                  aria-label="Čas do (UTC)"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className="h-9 w-24 shrink-0 rounded-lg border border-slate-700 bg-slate-800 px-2 text-slate-100 focus:border-slate-500 focus:outline-none"
+                />
+              </div>
+              <p className="mt-1 text-[11px] text-slate-500">≈ {formatLocalDateTime(endAt)} tvého času</p>
+            </div>
           </div>
 
           <input
@@ -170,11 +224,12 @@ export function EventsAdminModal({ onClose }: EventsAdminModalProps) {
             className="mb-3 h-9 w-full rounded-lg border border-slate-700 bg-slate-800 px-2.5 text-slate-100 placeholder:text-slate-500 focus:border-slate-500 focus:outline-none"
           />
 
+          {!rangeValid && <p className="mb-2 text-xs text-red-400">Začátek musí předcházet konci.</p>}
           {error && <p className="mb-2 text-xs text-red-400">{error}</p>}
 
           <button
             type="submit"
-            disabled={selected.size === 0 || startDate > endDate || submitting}
+            disabled={selected.size === 0 || !rangeValid || submitting}
             className="h-9 w-full rounded-lg border border-amber-500/40 bg-amber-500/10 px-3.5 text-amber-300 hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? 'Ukládám…' : 'Naplánovat event'}
@@ -189,7 +244,7 @@ export function EventsAdminModal({ onClose }: EventsAdminModalProps) {
             <li
               key={group.groupId}
               className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs ${
-                isActiveToday(group.startDate, group.endDate)
+                isActiveNow(group.startAt, group.endAt)
                   ? 'border-amber-500/50 bg-amber-500/10 text-amber-200'
                   : 'border-slate-800 bg-slate-800/50 text-slate-400'
               }`}
@@ -200,7 +255,10 @@ export function EventsAdminModal({ onClose }: EventsAdminModalProps) {
                   {group.label ? ` — ${group.label}` : ''}
                 </p>
                 <p>
-                  {group.startDate} → {group.endDate}
+                  {formatUtcDateTime(group.startAt)} → {formatUtcDateTime(group.endAt)}
+                </p>
+                <p className="text-slate-500">
+                  tvůj čas: {formatLocalDateTime(group.startAt)} → {formatLocalDateTime(group.endAt)}
                 </p>
               </div>
               <button

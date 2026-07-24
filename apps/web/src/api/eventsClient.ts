@@ -4,8 +4,9 @@ export interface MercyEvent {
   id: number;
   groupId: string;
   shardType: ShardType;
-  startDate: string;
-  endDate: string;
+  /** ISO 8601 UTC datetime, e.g. '2026-07-24T08:00:00Z'. */
+  startAt: string;
+  endAt: string;
   multiplier: number;
   label: string | null;
 }
@@ -24,15 +25,15 @@ export function fetchEvents(): Promise<MercyEvent[]> {
 
 export function createEvent(
   shardTypes: ShardType[],
-  startDate: string,
-  endDate: string,
+  startAt: string,
+  endAt: string,
   label: string,
 ): Promise<{ groupId: string }> {
   return fetch('/api/events', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ shardTypes, startDate, endDate, label: label.trim() || undefined }),
+    body: JSON.stringify({ shardTypes, startAt, endAt, label: label.trim() || undefined }),
   }).then((res) => handleEventsResponse<{ groupId: string }>(res));
 }
 

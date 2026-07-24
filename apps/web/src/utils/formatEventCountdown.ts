@@ -1,16 +1,20 @@
-function pluralizeDny(n: number): string {
-  if (n === 1) return 'den';
-  if (n >= 2 && n <= 4) return 'dny';
-  return 'dní';
+function pluralize(n: number, one: string, few: string, many: string): string {
+  if (n === 1) return one;
+  if (n >= 2 && n <= 4) return few;
+  return many;
 }
 
-/** `endDate` is an ISO date (YYYY-MM-DD). Compares against the client's local today. */
-export function formatEventCountdown(endDate: string): string {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const end = new Date(`${endDate}T00:00:00`);
-  const diffDays = Math.round((end.getTime() - today.getTime()) / 86_400_000);
+/** `endAt` is an ISO 8601 UTC datetime, e.g. '2026-07-27T08:00:00Z'. */
+export function formatEventCountdown(endAt: string): string {
+  const diffMs = new Date(endAt).getTime() - Date.now();
 
-  if (diffDays <= 0) return '2x event · končí dnes';
-  return `2x event · končí za ${diffDays} ${pluralizeDny(diffDays)}`;
+  if (diffMs <= 0) return '2x event · končí za chvíli';
+
+  const diffHours = Math.ceil(diffMs / 3_600_000);
+  if (diffHours < 24) {
+    return `2x event · končí za ${diffHours} ${pluralize(diffHours, 'hodinu', 'hodiny', 'hodin')}`;
+  }
+
+  const diffDays = Math.ceil(diffHours / 24);
+  return `2x event · končí za ${diffDays} ${pluralize(diffDays, 'den', 'dny', 'dní')}`;
 }

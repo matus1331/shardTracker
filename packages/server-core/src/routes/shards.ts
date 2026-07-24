@@ -19,7 +19,7 @@ function withChance(row: ShardCounterRow, activeEvents: Map<ShardType, MercyEven
     ...row,
     currentChance: calculateDropChance(row.shardType, row.sinceLastDrop, { multiplier: activeEvent?.multiplier ?? 1 }),
     activeEvent: activeEvent
-      ? { multiplier: activeEvent.multiplier, endDate: activeEvent.endDate, label: activeEvent.label }
+      ? { multiplier: activeEvent.multiplier, endAt: activeEvent.endAt, label: activeEvent.label }
       : null,
   };
 }
