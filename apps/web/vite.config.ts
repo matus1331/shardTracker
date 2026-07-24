@@ -9,6 +9,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: false,
       devOptions: { enabled: true, suppressWarnings: true },
       includeAssets: ['favicon.png'],
       manifest: {
