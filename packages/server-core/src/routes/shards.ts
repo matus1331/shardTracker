@@ -1,13 +1,27 @@
 import type { FastifyInstance } from 'fastify';
 import { calculateDropChance, SHARD_TYPES, type ShardType } from '@rsl/mercy-calc';
-import { addShards, correctSinceLastDrop, getAllCounters, type ShardCounterRow } from '../repository.js';
+import {
+  addShards,
+  correctSinceLastDrop,
+  getActiveMercyEvents,
+  getAllCounters,
+  type MercyEventRow,
+  type ShardCounterRow,
+} from '../repository.js';
 
 function isShardType(value: string): value is ShardType {
   return (SHARD_TYPES as string[]).includes(value);
 }
 
-function withChance(row: ShardCounterRow) {
-  return { ...row, currentChance: calculateDropChance(row.shardType, row.sinceLastDrop) };
+function withChance(row: ShardCounterRow, activeEvents: Map<ShardType, MercyEventRow>) {
+  const activeEvent = activeEvents.get(row.shardType);
+  return {
+    ...row,
+    currentChance: calculateDropChance(row.shardType, row.sinceLastDrop, { multiplier: activeEvent?.multiplier ?? 1 }),
+    activeEvent: activeEvent
+      ? { multiplier: activeEvent.multiplier, endAt: activeEvent.endAt, label: activeEvent.label }
+      : null,
+  };
 }
 
 export async function shardRoutes(app: FastifyInstance) {
@@ -18,7 +32,9 @@ export async function shardRoutes(app: FastifyInstance) {
   });
 
   app.get('/api/shards', async (request) => {
-    return (await getAllCounters(request.profileId!)).map(withChance);
+    const counters = await getAllCounters(request.profileId!);
+    const activeEvents = await getActiveMercyEvents(SHARD_TYPES);
+    return counters.map((row) => withChance(row, activeEvents));
   });
 
   app.post<{ Params: { shardType: string }; Body: { amount?: number; gotDrop?: boolean } }>(
@@ -35,7 +51,8 @@ export async function shardRoutes(app: FastifyInstance) {
       }
 
       const updated = await addShards(request.profileId!, shardType, amount as number, gotDrop);
-      return withChance(updated);
+      const activeEvents = await getActiveMercyEvents([shardType]);
+      return withChance(updated, activeEvents);
     },
   );
 
@@ -53,7 +70,8 @@ export async function shardRoutes(app: FastifyInstance) {
       }
 
       const updated = await correctSinceLastDrop(request.profileId!, shardType, value as number, gotDrop);
-      return withChance(updated);
+      const activeEvents = await getActiveMercyEvents([shardType]);
+      return withChance(updated, activeEvents);
     },
   );
 }

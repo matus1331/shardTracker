@@ -20,7 +20,10 @@ export const client = createClient({
   authToken: process.env.DATABASE_AUTH_TOKEN,
 });
 
-const migrationSql = readFileSync(join(__dirname, 'migrations', '001_init.sql'), 'utf-8');
+const MIGRATION_FILES = ['001_init.sql', '002_mercy_events.sql'];
 
 // Idempotent (CREATE TABLE/INDEX IF NOT EXISTS) — safe to run on every cold start.
-await client.executeMultiple(migrationSql);
+for (const file of MIGRATION_FILES) {
+  const migrationSql = readFileSync(join(__dirname, 'migrations', file), 'utf-8');
+  await client.executeMultiple(migrationSql);
+}

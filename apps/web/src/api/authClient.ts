@@ -1,5 +1,6 @@
 export interface AuthUser {
   username: string;
+  isAdmin: boolean;
 }
 
 async function handleAuthResponse(res: Response): Promise<AuthUser> {
