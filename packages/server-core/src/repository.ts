@@ -87,6 +87,7 @@ export async function correctSinceLastDrop(
   shardType: ShardType,
   value: number,
   gotDrop: boolean,
+  championName?: string | null,
 ): Promise<ShardCounterRow> {
   const tx = await client.transaction('write');
   try {
@@ -104,9 +105,9 @@ export async function correctSinceLastDrop(
 
     await tx.execute({
       sql: `INSERT INTO shard_batches
-              (profile_id, shard_type, action_type, amount, got_drop, since_last_drop_before, since_last_drop_after)
-            VALUES (?, ?, 'CORRECTION', NULL, ?, ?, ?)`,
-      args: [profileId, shardType, gotDrop ? 1 : 0, before.sinceLastDrop, after],
+              (profile_id, shard_type, action_type, amount, got_drop, since_last_drop_before, since_last_drop_after, champion_name)
+            VALUES (?, ?, 'CORRECTION', NULL, ?, ?, ?, ?)`,
+      args: [profileId, shardType, gotDrop ? 1 : 0, before.sinceLastDrop, after, championName ?? null],
     });
 
     const afterRs = await tx.execute({ sql: SELECT_COUNTER_SQL, args: [profileId, shardType] });
@@ -118,6 +119,55 @@ export async function correctSinceLastDrop(
     await tx.rollback();
     throw err;
   }
+}
+
+export interface DropRow {
+  shardType: ShardType;
+  createdAt: string;
+  seriesNumber: number;
+  championName: string | null;
+  duringEvent: boolean;
+}
+
+interface RawDropRow {
+  shard_type: ShardType;
+  created_at: string;
+  since_last_drop_before: number;
+  champion_name: string | null;
+  during_event: number;
+}
+
+export async function listDrops(profileId: number): Promise<DropRow[]> {
+  const rs = await client.execute({
+    sql: `SELECT sb.shard_type, sb.created_at, sb.since_last_drop_before, sb.champion_name,
+                 EXISTS (
+                   SELECT 1 FROM mercy_events me
+                   WHERE me.shard_type = sb.shard_type
+                     AND datetime(me.start_at) <= datetime(sb.created_at)
+                     AND datetime(me.end_at) >= datetime(sb.created_at)
+                 ) AS during_event
+          FROM shard_batches sb
+          WHERE sb.profile_id = ? AND sb.got_drop = 1
+          ORDER BY sb.created_at DESC, sb.id DESC`,
+    args: [profileId],
+  });
+  return (rs.rows as unknown as RawDropRow[]).map((row) => ({
+    shardType: row.shard_type,
+    createdAt: row.created_at,
+    seriesNumber: Number(row.since_last_drop_before),
+    championName: row.champion_name,
+    duringEvent: Boolean(Number(row.during_event)),
+  }));
+}
+
+export async function listChampionNames(profileId: number, shardType: ShardType): Promise<string[]> {
+  const rs = await client.execute({
+    sql: `SELECT DISTINCT champion_name FROM shard_batches
+          WHERE profile_id = ? AND shard_type = ? AND champion_name IS NOT NULL
+          ORDER BY champion_name`,
+    args: [profileId, shardType],
+  });
+  return (rs.rows as unknown as { champion_name: string }[]).map((row) => row.champion_name);
 }
 
 export interface ProfileRow {

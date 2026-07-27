@@ -16,10 +16,23 @@ export interface ShardCounterState {
   activeEvent: ActiveMercyEvent | null;
 }
 
+export interface DropRecord {
+  shardType: ShardType;
+  /** ISO 8601 UTC datetime. */
+  createdAt: string;
+  /** Which shard in the series (since the previous drop) this one landed on. */
+  seriesNumber: number;
+  championName: string | null;
+  duringEvent: boolean;
+  mercyActive: boolean;
+}
+
 export interface ShardMeta {
   label: string;
   dropLabel: string;
   dropFlagLabel: string;
+  /** Shown in the drop history when no champion name was recorded for that drop. */
+  genericChampionLabel: string;
   dotClass: string;
   borderClass: string;
   /** Normal-saturation shard color, used for the dot and the pre-mercy bar segment. */
@@ -43,6 +56,7 @@ export const SHARD_META: Record<ShardType, ShardMeta> = {
     label: "Ancient shard",
     dropLabel: "legendary",
     dropFlagLabel: "padl legendary v této dávce",
+    genericChampionLabel: "Legendární šampion",
     dotClass: "bg-blue-500",
     borderClass: "border-t-blue-500",
     fillClass: "bg-blue-500",
@@ -60,6 +74,7 @@ export const SHARD_META: Record<ShardType, ShardMeta> = {
     label: "Void shard",
     dropLabel: "legendary",
     dropFlagLabel: "padl legendary v této dávce",
+    genericChampionLabel: "Legendární šampion",
     dotClass: "bg-violet-500",
     borderClass: "border-t-violet-500",
     fillClass: "bg-violet-500",
@@ -77,6 +92,7 @@ export const SHARD_META: Record<ShardType, ShardMeta> = {
     label: "Primal shard",
     dropLabel: "mythical",
     dropFlagLabel: "padl mytický šampion v této dávce",
+    genericChampionLabel: "Mytický šampion",
     dotClass: "bg-[#A30000]",
     borderClass: "border-t-[#A30000]",
     fillClass: "bg-[#A30000]",
@@ -94,6 +110,7 @@ export const SHARD_META: Record<ShardType, ShardMeta> = {
     label: "Sacred shard",
     dropLabel: "legendary",
     dropFlagLabel: "padl legendary v této dávce",
+    genericChampionLabel: "Legendární šampion",
     dotClass: "bg-amber-400",
     borderClass: "border-t-amber-400",
     fillClass: "bg-amber-400",
@@ -111,6 +128,7 @@ export const SHARD_META: Record<ShardType, ShardMeta> = {
     label: "Remnant summon",
     dropLabel: "mythical",
     dropFlagLabel: "padl mytický šampion v této dávce",
+    genericChampionLabel: "Mytický šampion",
     dotClass: "bg-[#A30000]",
     borderClass: "border-t-[#A30000]",
     fillClass: "bg-[#A30000]",

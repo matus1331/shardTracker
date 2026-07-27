@@ -14,7 +14,20 @@ function LightningIcon() {
   );
 }
 
-export function Dashboard() {
+function HistoryIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M3 12a9 9 0 1 0 3-6.7M3 12V6m0 6h6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 8v4l3 2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+interface DashboardProps {
+  onOpenHistory: () => void;
+}
+
+export function Dashboard({ onOpenHistory }: DashboardProps) {
   const { shards, error, logShards, correctCount, confirmDrop } = useShardData();
   const { user } = useAuth();
   const [showEventsAdmin, setShowEventsAdmin] = useState(false);
@@ -29,6 +42,15 @@ export function Dashboard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onOpenHistory}
+            title="Historie a statistiky"
+            aria-label="Historie a statistiky"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+          >
+            <HistoryIcon />
+          </button>
           {user?.isAdmin && (
             <button
               type="button"

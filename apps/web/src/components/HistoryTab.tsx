@@ -1,0 +1,96 @@
+import { useState } from 'react';
+import { SHARD_TYPES, type ShardType } from '@rsl/mercy-calc';
+import type { DropRecord } from '../types';
+import { SHARD_META } from '../types';
+import { formatDateTime } from '../utils/formatDateTime';
+
+interface HistoryTabProps {
+  drops: DropRecord[];
+}
+
+function DropRow({ drop }: { drop: DropRecord }) {
+  const meta = SHARD_META[drop.shardType];
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 rounded-lg border border-slate-800 bg-slate-900 px-3.5 py-2.5">
+      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+        <span className={`inline-block h-2 w-2 shrink-0 rounded-full ${meta.dotClass}`} />
+        <span className="text-[13px] font-semibold whitespace-nowrap">{meta.label}</span>
+        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase ${meta.pillClass}`}>
+          {meta.dropLabel}
+        </span>
+        <span className="text-xs text-slate-400 tabular-nums">{drop.seriesNumber}. shard v sérii</span>
+        <span
+          className={`rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide ${
+            drop.mercyActive ? 'bg-slate-700/50 text-slate-400' : 'bg-emerald-500/15 text-emerald-400'
+          }`}
+        >
+          {drop.mercyActive ? 'V MERCY' : 'MIMO MERCY'}
+        </span>
+        {drop.duringEvent && (
+          <span className="rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 px-2 py-0.5 text-[10px] font-bold tracking-wide text-slate-900">
+            ⚡ 2×
+          </span>
+        )}
+      </div>
+      <div className="flex shrink-0 items-center gap-3 text-xs">
+        <span className={drop.championName ? 'text-slate-300' : 'text-slate-500 italic'}>
+          {drop.championName || meta.genericChampionLabel}
+        </span>
+        <span className="text-slate-500 tabular-nums">{formatDateTime(drop.createdAt)}</span>
+      </div>
+    </div>
+  );
+}
+
+export function HistoryTab({ drops }: HistoryTabProps) {
+  const [filter, setFilter] = useState<ShardType | 'ALL'>('ALL');
+  const filtered = filter === 'ALL' ? drops : drops.filter((d) => d.shardType === filter);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setFilter('ALL')}
+          className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+            filter === 'ALL'
+              ? 'bg-slate-100 text-slate-900'
+              : 'border border-slate-700 bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+          }`}
+        >
+          Vše
+        </button>
+        {SHARD_TYPES.map((shardType) => (
+          <button
+            key={shardType}
+            type="button"
+            onClick={() => setFilter(shardType)}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+              filter === shardType
+                ? 'bg-slate-100 text-slate-900'
+                : 'border border-slate-700 bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+            }`}
+          >
+            <span className={`inline-block h-1.5 w-1.5 rounded-full ${SHARD_META[shardType].dotClass}`} />
+            {SHARD_META[shardType].label}
+          </button>
+        ))}
+      </div>
+
+      {filtered.length === 0 ? (
+        <p className="text-sm text-slate-400">
+          {drops.length === 0
+            ? 'Zatím žádné dropy nezaznamenané. Až ti něco padne, objeví se tu.'
+            : 'Pro tento typ shardu zatím žádné dropy nejsou.'}
+        </p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {filtered.map((drop) => (
+            <DropRow key={`${drop.shardType}-${drop.createdAt}`} drop={drop} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
