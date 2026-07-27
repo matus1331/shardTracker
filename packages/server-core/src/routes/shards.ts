@@ -56,11 +56,11 @@ export async function shardRoutes(app: FastifyInstance) {
     },
   );
 
-  app.put<{ Params: { shardType: string }; Body: { value?: number; gotDrop?: boolean } }>(
+  app.put<{ Params: { shardType: string }; Body: { value?: number; gotDrop?: boolean; championName?: string } }>(
     '/api/shards/:shardType/since-last-drop',
     async (request, reply) => {
       const { shardType } = request.params;
-      const { value, gotDrop = false } = request.body ?? {};
+      const { value, gotDrop = false, championName } = request.body ?? {};
 
       if (!isShardType(shardType)) {
         return reply.code(400).send({ error: 'Invalid shardType' });
@@ -69,7 +69,14 @@ export async function shardRoutes(app: FastifyInstance) {
         return reply.code(400).send({ error: 'value must be an integer >= 0' });
       }
 
-      const updated = await correctSinceLastDrop(request.profileId!, shardType, value as number, gotDrop);
+      const trimmedChampionName = championName?.trim().slice(0, 80) || null;
+      const updated = await correctSinceLastDrop(
+        request.profileId!,
+        shardType,
+        value as number,
+        gotDrop,
+        trimmedChampionName,
+      );
       const activeEvents = await getActiveMercyEvents([shardType]);
       return withChance(updated, activeEvents);
     },

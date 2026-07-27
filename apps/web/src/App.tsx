@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { Dashboard } from './components/Dashboard';
 import { LoginScreen } from './components/LoginScreen';
+import { HistoryStatsPage } from './components/HistoryStatsPage';
 
 function AppShell() {
   const { user, loading } = useAuth();
+  const [page, setPage] = useState<'dashboard' | 'history'>('dashboard');
 
   if (loading) {
     return (
@@ -13,7 +16,13 @@ function AppShell() {
     );
   }
 
-  return user ? <Dashboard /> : <LoginScreen />;
+  if (!user) return <LoginScreen />;
+
+  return page === 'history' ? (
+    <HistoryStatsPage onBack={() => setPage('dashboard')} />
+  ) : (
+    <Dashboard onOpenHistory={() => setPage('history')} />
+  );
 }
 
 export function App() {

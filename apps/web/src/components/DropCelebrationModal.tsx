@@ -1,20 +1,32 @@
-import { useState } from 'react';
+import { useEffect, useId, useState } from 'react';
+import type { ShardType } from '@rsl/mercy-calc';
+import { fetchChampionSuggestions } from '../api/dropsClient';
 
 interface DropCelebrationModalProps {
   title: string;
-  onConfirm: () => Promise<void>;
+  shardType: ShardType;
+  onConfirm: (championName: string) => Promise<void>;
   onCancel: () => void;
 }
 
-export function DropCelebrationModal({ title, onConfirm, onCancel }: DropCelebrationModalProps) {
+export function DropCelebrationModal({ title, shardType, onConfirm, onCancel }: DropCelebrationModalProps) {
+  const [championName, setChampionName] = useState('');
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const datalistId = useId();
+
+  useEffect(() => {
+    fetchChampionSuggestions(shardType)
+      .then(setSuggestions)
+      .catch(() => {});
+  }, [shardType]);
 
   const handleConfirm = async () => {
     setSubmitting(true);
     setError(null);
     try {
-      await onConfirm();
+      await onConfirm(championName.trim());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Reset se nezdařil');
       setSubmitting(false);
@@ -29,9 +41,27 @@ export function DropCelebrationModal({ title, onConfirm, onCancel }: DropCelebra
       >
         <p className="mb-2 text-3xl">🎉</p>
         <p className="mb-2 text-base font-semibold">{title}</p>
-        <p className="mb-5 text-sm text-slate-400">
+        <p className="mb-4 text-sm text-slate-400">
           Chceš teď vynulovat svůj Shard Tracker a začít počítat Mercy counter od nuly?
         </p>
+        <label className="mb-5 block text-left">
+          <span className="mb-1 block text-xs text-slate-400">Jméno šampiona (nepovinné)</span>
+          <input
+            type="text"
+            value={championName}
+            onChange={(e) => setChampionName(e.target.value)}
+            disabled={submitting}
+            placeholder="např. Tormin the Cold"
+            list={datalistId}
+            maxLength={80}
+            className="h-9 w-full rounded-lg border border-slate-700 bg-slate-800 px-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-slate-500 focus:outline-none"
+          />
+          <datalist id={datalistId}>
+            {suggestions.map((name) => (
+              <option key={name} value={name} />
+            ))}
+          </datalist>
+        </label>
         {error && <p className="mb-3 text-xs text-red-400">{error}</p>}
         <div className="flex justify-center gap-2">
           <button

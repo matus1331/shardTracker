@@ -29,9 +29,9 @@ export function useShardData() {
   }, []);
 
   const confirmDrop = useCallback(
-    async (shardType: ShardType) => {
+    async (shardType: ShardType, championName: string) => {
       const current = shards?.find((s) => s.shardType === shardType);
-      const updated = await correctSinceLastDrop(shardType, current?.sinceLastDrop ?? 0, true);
+      const updated = await correctSinceLastDrop(shardType, current?.sinceLastDrop ?? 0, true, championName);
       setShards((prev) => prev?.map((s) => (s.shardType === shardType ? updated : s)) ?? prev);
     },
     [shards],

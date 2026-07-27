@@ -6,7 +6,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc && cp -r src/migrations dist/migrations"
+    "build": "tsc && rm -rf dist/migrations && cp -r src/migrations dist/migrations"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",

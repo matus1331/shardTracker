@@ -4,7 +4,6 @@ import { getMercyProgress, MERCY_CONFIGS } from '@rsl/mercy-calc';
 import type { ShardCounterState } from '../types';
 import { SHARD_META } from '../types';
 import { MercyProgressBar } from './MercyProgressBar';
-import { LifetimeStats } from './LifetimeStats';
 import { LogShardsForm } from './LogShardsForm';
 import { EditCountModal } from './EditCountModal';
 import { DropCelebrationModal } from './DropCelebrationModal';
@@ -14,7 +13,7 @@ interface ShardCardProps {
   data: ShardCounterState;
   onLog: (shardType: ShardType, amount: number, gotDrop: boolean) => Promise<void>;
   onCorrect: (shardType: ShardType, value: number, gotDrop: boolean) => Promise<void>;
-  onConfirmDrop: (shardType: ShardType) => Promise<void>;
+  onConfirmDrop: (shardType: ShardType, championName: string) => Promise<void>;
 }
 
 function PencilIcon() {
@@ -77,24 +76,17 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
         </div>
       </div>
 
-      <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-        <div className="flex items-baseline gap-1.5">
-          {data.activeEvent && (
-            <>
-              <span className="text-sm text-slate-500 line-through tabular-nums">{baseChancePct}%</span>
-              <span className="text-sm text-slate-500">→</span>
-            </>
-          )}
-          <span className="text-2xl font-bold tabular-nums">{currentChancePct}%</span>
-          <span className="text-[11px] whitespace-nowrap text-slate-500">
-            {mercyActive ? 'mercy aktivní' : 'aktuální šance'}
-          </span>
-        </div>
-        <LifetimeStats
-          lifetimeOpened={data.lifetimeOpened}
-          lifetimeDrops={data.lifetimeDrops}
-          dropLabel={meta.dropLabel}
-        />
+      <div className="mb-1.5 flex items-baseline gap-1.5">
+        {data.activeEvent && (
+          <>
+            <span className="text-sm text-slate-500 line-through tabular-nums">{baseChancePct}%</span>
+            <span className="text-sm text-slate-500">→</span>
+          </>
+        )}
+        <span className="text-2xl font-bold tabular-nums">{currentChancePct}%</span>
+        <span className="text-[11px] whitespace-nowrap text-slate-500">
+          {mercyActive ? 'mercy aktivní' : 'aktuální šance'}
+        </span>
       </div>
 
       <div className="mb-3">
@@ -150,9 +142,10 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
       {celebrating && (
         <DropCelebrationModal
           title={meta.celebrationTitle}
+          shardType={data.shardType}
           onCancel={() => setCelebrating(false)}
-          onConfirm={async () => {
-            await onConfirmDrop(data.shardType);
+          onConfirm={async (championName) => {
+            await onConfirmDrop(data.shardType, championName);
             setCelebrating(false);
           }}
         />

@@ -25,11 +25,16 @@ export function addShards(shardType: ShardType, amount: number, gotDrop: boolean
   }).then(handleResponse);
 }
 
-export function correctSinceLastDrop(shardType: ShardType, value: number, gotDrop: boolean): Promise<ShardCounterState> {
+export function correctSinceLastDrop(
+  shardType: ShardType,
+  value: number,
+  gotDrop: boolean,
+  championName?: string,
+): Promise<ShardCounterState> {
   return fetch(`/api/shards/${shardType}/since-last-drop`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ value, gotDrop }),
+    body: JSON.stringify({ value, gotDrop, championName }),
   }).then(handleResponse);
 }
