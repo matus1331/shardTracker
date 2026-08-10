@@ -55,7 +55,7 @@ if (!mercyEventsColumnNames.has('kind')) {
   await client.executeMultiple(migrationSql);
 }
 
-if (!shardBatchesColumnNames.has('extra_champion_name')) {
+if (!shardBatchesColumnNames.has('extra_champion_id')) {
   const migrationSql = readFileSync(join(__dirname, 'migrations', '007_extra_champion.sql'), 'utf-8');
   await client.executeMultiple(migrationSql);
 }

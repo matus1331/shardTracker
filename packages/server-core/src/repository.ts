@@ -166,7 +166,6 @@ export interface DropRow {
   championUrl: string | null;
   extraChampionName: string | null;
   extraChampionUrl: string | null;
-  duringEvent: boolean;
   eventKind: 'MULTIPLIER' | 'EXTRA_LEGENDARY' | null;
 }
 
@@ -209,7 +208,6 @@ export async function listDrops(profileId: number): Promise<DropRow[]> {
     championUrl: row.champion_url,
     extraChampionName: row.extra_champion_name,
     extraChampionUrl: row.extra_champion_url,
-    duringEvent: row.event_kind !== null,
     eventKind: row.event_kind,
   }));
 }

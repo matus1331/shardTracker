@@ -29,7 +29,6 @@ export interface DropRecord {
   /** Bonus champion from an active Extra Legendary event, if the player reported one. */
   extraChampionName: string | null;
   extraChampionUrl: string | null;
-  duringEvent: boolean;
   eventKind: 'MULTIPLIER' | 'EXTRA_LEGENDARY' | null;
   mercyActive: boolean;
 }

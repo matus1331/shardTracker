@@ -73,7 +73,7 @@ export function DropCelebrationModal({
         {extraLegendaryActive && (
           <>
             <p className={`mb-1 text-left text-[11px] font-semibold ${EXTRA_LEGENDARY_TEXT_CLASS}`}>
-              🔥 Extra Legendary event aktivní — padly dvě lega?
+              🔥 Extra Legendary event aktivní — padla dvě lega?
             </p>
             <ChampionAutocompleteField
               label="Extra lego (nepovinné)"

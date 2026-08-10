@@ -77,10 +77,15 @@ export async function shardRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: 'Invalid championName for this shard type' });
     }
 
+    const activeEvents = await getActiveMercyEvents([shardType]);
+
     const trimmedExtraChampionName = extraChampionName?.trim().slice(0, 80) || null;
     if (trimmedExtraChampionName) {
       if (!gotDrop) {
         return reply.code(400).send({ error: 'extraChampionName requires gotDrop' });
+      }
+      if (activeEvents.get(shardType)?.kind !== 'EXTRA_LEGENDARY') {
+        return reply.code(400).send({ error: 'No active Extra Legendary event for this shard type' });
       }
       if (!(await isChampionInShardPool(shardType, trimmedExtraChampionName))) {
         return reply.code(400).send({ error: 'Invalid extraChampionName for this shard type' });
@@ -95,7 +100,6 @@ export async function shardRoutes(app: FastifyInstance) {
       trimmedChampionName,
       trimmedExtraChampionName,
     );
-    const activeEvents = await getActiveMercyEvents([shardType]);
     return withChance(updated, activeEvents);
   });
 }
