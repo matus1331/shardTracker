@@ -33,6 +33,13 @@ export function DropCelebrationModal({
       .catch(() => {});
   }, [shardType]);
 
+  useEffect(() => {
+    if (!extraLegendaryActive) {
+      setExtraChampionName('');
+      setExtraUnknown(false);
+    }
+  }, [extraLegendaryActive]);
+
   const handleConfirm = async () => {
     setSubmitting(true);
     setError(null);
