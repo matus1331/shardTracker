@@ -322,6 +322,7 @@ export interface MercyEventRow {
   startAt: string;
   endAt: string;
   multiplier: number;
+  kind: 'MULTIPLIER' | 'EXTRA_LEGENDARY';
   label: string | null;
 }
 
@@ -332,6 +333,7 @@ interface RawMercyEventRow {
   start_at: string;
   end_at: string;
   multiplier: number;
+  kind: 'MULTIPLIER' | 'EXTRA_LEGENDARY';
   label: string | null;
 }
 
@@ -343,11 +345,12 @@ function toMercyEventRow(row: RawMercyEventRow): MercyEventRow {
     startAt: row.start_at,
     endAt: row.end_at,
     multiplier: Number(row.multiplier),
+    kind: row.kind,
     label: row.label,
   };
 }
 
-const MERCY_EVENT_COLUMNS = 'id, group_id, shard_type, start_at, end_at, multiplier, label';
+const MERCY_EVENT_COLUMNS = 'id, group_id, shard_type, start_at, end_at, multiplier, kind, label';
 
 export async function listMercyEvents(): Promise<MercyEventRow[]> {
   const rs = await client.execute(
@@ -384,15 +387,17 @@ export async function createMercyEvent(
   startAt: string,
   endAt: string,
   label: string | null,
+  kind: 'MULTIPLIER' | 'EXTRA_LEGENDARY',
 ): Promise<string> {
   const groupId = randomUUID();
+  const multiplier = kind === 'EXTRA_LEGENDARY' ? 1.0 : 2.0;
   const tx = await client.transaction('write');
   try {
     for (const shardType of shardTypes) {
       await tx.execute({
-        sql: `INSERT INTO mercy_events (group_id, shard_type, start_at, end_at, multiplier, label)
-              VALUES (?, ?, ?, ?, 2.0, ?)`,
-        args: [groupId, shardType, startAt, endAt, label],
+        sql: `INSERT INTO mercy_events (group_id, shard_type, start_at, end_at, multiplier, label, kind)
+              VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        args: [groupId, shardType, startAt, endAt, multiplier, label, kind],
       });
     }
     await tx.commit();
