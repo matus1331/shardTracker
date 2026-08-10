@@ -4,17 +4,17 @@ function pluralize(n: number, one: string, few: string, many: string): string {
   return many;
 }
 
-/** `endAt` is an ISO 8601 UTC datetime, e.g. '2026-07-27T08:00:00Z'. */
-export function formatEventCountdown(endAt: string): string {
+/** `endAt` is an ISO 8601 UTC datetime, e.g. '2026-07-27T08:00:00Z'. `label` is the event name prefix, e.g. '2x event' or 'Extra Legendary event'. */
+export function formatEventCountdown(endAt: string, label: string): string {
   const diffMs = new Date(endAt).getTime() - Date.now();
 
-  if (diffMs <= 0) return '2x event · končí za chvíli';
+  if (diffMs <= 0) return `${label} · končí za chvíli`;
 
   const diffHours = Math.ceil(diffMs / 3_600_000);
   if (diffHours < 24) {
-    return `2x event · končí za ${diffHours} ${pluralize(diffHours, 'hodinu', 'hodiny', 'hodin')}`;
+    return `${label} · končí za ${diffHours} ${pluralize(diffHours, 'hodinu', 'hodiny', 'hodin')}`;
   }
 
   const diffDays = Math.ceil(diffHours / 24);
-  return `2x event · končí za ${diffDays} ${pluralize(diffDays, 'den', 'dny', 'dní')}`;
+  return `${label} · končí za ${diffDays} ${pluralize(diffDays, 'den', 'dny', 'dní')}`;
 }

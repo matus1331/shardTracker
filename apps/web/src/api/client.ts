@@ -30,11 +30,12 @@ export function correctSinceLastDrop(
   value: number,
   gotDrop: boolean,
   championName?: string,
+  extraChampionName?: string,
 ): Promise<ShardCounterState> {
   return fetch(`/api/shards/${shardType}/since-last-drop`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ value, gotDrop, championName }),
+    body: JSON.stringify({ value, gotDrop, championName, extraChampionName }),
   }).then(handleResponse);
 }
