@@ -8,12 +8,18 @@ import { LogShardsForm } from './LogShardsForm';
 import { EditCountModal } from './EditCountModal';
 import { DropCelebrationModal } from './DropCelebrationModal';
 import { formatEventCountdown } from '../utils/formatEventCountdown';
+import {
+  EXTRA_LEGENDARY_BADGE_CLASS,
+  EXTRA_LEGENDARY_BADGE_LABEL,
+  EXTRA_LEGENDARY_CARD_ACCENT_CLASS,
+  EXTRA_LEGENDARY_TEXT_CLASS,
+} from '../utils/eventBadge';
 
 interface ShardCardProps {
   data: ShardCounterState;
   onLog: (shardType: ShardType, amount: number, gotDrop: boolean) => Promise<void>;
   onCorrect: (shardType: ShardType, value: number, gotDrop: boolean) => Promise<void>;
-  onConfirmDrop: (shardType: ShardType, championName: string) => Promise<void>;
+  onConfirmDrop: (shardType: ShardType, championName: string, extraChampionName?: string) => Promise<void>;
 }
 
 function PencilIcon() {
@@ -40,10 +46,12 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
   const [editing, setEditing] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
   const meta = SHARD_META[data.shardType];
+  const isMultiplierEvent = data.activeEvent?.kind === 'MULTIPLIER';
+  const isExtraLegendaryEvent = data.activeEvent?.kind === 'EXTRA_LEGENDARY';
   const { mercyThreshold, guaranteedAt, mercyActive, preMercyProgress, mercyProgress } = getMercyProgress(
     data.shardType,
     data.sinceLastDrop,
-    { multiplier: data.activeEvent?.multiplier ?? 1 },
+    { multiplier: isMultiplierEvent ? data.activeEvent!.multiplier : 1 },
   );
 
   const progressCaption = mercyActive
@@ -56,7 +64,11 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
   return (
     <div
       className={`rounded-xl bg-slate-900 p-4 ${
-        data.activeEvent ? `border-2 ${meta.eventAccentClass}` : `border border-slate-800 border-l-[3px] ${meta.borderClass}`
+        isExtraLegendaryEvent
+          ? `border-2 ${EXTRA_LEGENDARY_CARD_ACCENT_CLASS}`
+          : isMultiplierEvent
+            ? `border-2 ${meta.eventAccentClass}`
+            : `border border-slate-800 border-l-[3px] ${meta.borderClass}`
       }`}
     >
       <div className="mb-2 flex items-center justify-between">
@@ -65,11 +77,12 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
           <span>{meta.label}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          {data.activeEvent && (
+          {isMultiplierEvent && (
             <span className="animate-pulse rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 px-2 py-0.5 text-[10px] font-bold tracking-wide text-slate-900 shadow-[0_0_8px_1px_rgba(251,191,36,0.6)] motion-reduce:animate-none">
               ⚡ 2×
             </span>
           )}
+          {isExtraLegendaryEvent && <span className={EXTRA_LEGENDARY_BADGE_CLASS}>{EXTRA_LEGENDARY_BADGE_LABEL}</span>}
           <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase ${meta.pillClass}`}>
             {meta.dropLabel}
           </span>
@@ -77,7 +90,7 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
       </div>
 
       <div className="mb-1.5 flex items-baseline gap-1.5">
-        {data.activeEvent && (
+        {isMultiplierEvent && (
           <>
             <span className="text-sm text-slate-500 line-through tabular-nums">{baseChancePct}%</span>
             <span className="text-sm text-slate-500">→</span>
@@ -100,7 +113,11 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
           neonGlowClass={meta.neonGlowClass}
         />
         <div className="mt-1 flex items-center justify-between text-[11px] tabular-nums">
-          <span className="text-amber-400">{data.activeEvent ? formatEventCountdown(data.activeEvent.endAt) : ''}</span>
+          <span className={isExtraLegendaryEvent ? EXTRA_LEGENDARY_TEXT_CLASS : 'text-amber-400'}>
+            {data.activeEvent
+              ? formatEventCountdown(data.activeEvent.endAt, isExtraLegendaryEvent ? 'Extra Legendary event' : '2x event')
+              : ''}
+          </span>
           <span className="text-slate-500">{progressCaption}</span>
         </div>
       </div>
@@ -143,9 +160,10 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
         <DropCelebrationModal
           title={meta.celebrationTitle}
           shardType={data.shardType}
+          extraLegendaryActive={isExtraLegendaryEvent}
           onCancel={() => setCelebrating(false)}
-          onConfirm={async (championName) => {
-            await onConfirmDrop(data.shardType, championName);
+          onConfirm={async (championName, extraChampionName) => {
+            await onConfirmDrop(data.shardType, championName, extraChampionName || undefined);
             setCelebrating(false);
           }}
         />
