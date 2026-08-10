@@ -5,6 +5,7 @@ import {
   correctSinceLastDrop,
   getActiveMercyEvents,
   getAllCounters,
+  isChampionInShardPool,
   type MercyEventRow,
   type ShardCounterRow,
 } from '../repository.js';
@@ -70,6 +71,9 @@ export async function shardRoutes(app: FastifyInstance) {
       }
 
       const trimmedChampionName = championName?.trim().slice(0, 80) || null;
+      if (trimmedChampionName && !(await isChampionInShardPool(shardType, trimmedChampionName))) {
+        return reply.code(400).send({ error: 'Invalid championName for this shard type' });
+      }
       const updated = await correctSinceLastDrop(
         request.profileId!,
         shardType,

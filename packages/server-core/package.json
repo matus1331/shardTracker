@@ -6,12 +6,16 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc && rm -rf dist/migrations && cp -r src/migrations dist/migrations"
+    "build": "tsc && rm -rf dist/migrations && cp -r src/migrations dist/migrations",
+    "import-champions": "tsx src/scripts/import-champions.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",
     "@libsql/client": "^0.15.0",
     "@rsl/mercy-calc": "*",
     "fastify": "^5.2.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2"
   }
 }

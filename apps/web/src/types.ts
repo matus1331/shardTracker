@@ -23,6 +23,8 @@ export interface DropRecord {
   /** Which shard in the series (since the previous drop) this one landed on. */
   seriesNumber: number;
   championName: string | null;
+  /** Link to the champion's HellHades detail/rating page, if the name matched a known champion. */
+  championUrl: string | null;
   duringEvent: boolean;
   mercyActive: boolean;
 }

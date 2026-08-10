@@ -9,4 +9,6 @@ export interface MercyConfig {
   /** Shards opened since the last drop before the per-shard mercy bonus starts accruing. */
   mercyThreshold: number;
   maxChance: number;
+  /** Rarity of champion this shard type's mercy pity tracks. */
+  rarity: 'LEGENDARY' | 'MYTHICAL';
 }

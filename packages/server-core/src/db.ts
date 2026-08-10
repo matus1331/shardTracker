@@ -20,7 +20,7 @@ export const client = createClient({
   authToken: process.env.DATABASE_AUTH_TOKEN,
 });
 
-const MIGRATION_FILES = ['001_init.sql', '002_mercy_events.sql'];
+const MIGRATION_FILES = ['001_init.sql', '002_mercy_events.sql', '004_champions.sql'];
 
 // Idempotent (CREATE TABLE/INDEX IF NOT EXISTS) — safe to run on every cold start.
 for (const file of MIGRATION_FILES) {
@@ -28,14 +28,20 @@ for (const file of MIGRATION_FILES) {
   await client.executeMultiple(migrationSql);
 }
 
-// 003_champion_name.sql adds a column via ALTER TABLE, which this SQLite build doesn't
-// support as `ADD COLUMN IF NOT EXISTS` — guard it with a PRAGMA check instead so it stays
-// safe to run on every cold start like the migrations above.
+// 003_champion_name.sql and 005_champion_id.sql add columns via ALTER TABLE, which this
+// SQLite build doesn't support as `ADD COLUMN IF NOT EXISTS` — guard them with a PRAGMA
+// check instead so they stay safe to run on every cold start like the migrations above.
+// 004_champions.sql (in MIGRATION_FILES above) must have already created `champions` by
+// the time 005 runs, since 005's ALTER references it.
 const shardBatchesColumns = await client.execute('PRAGMA table_info(shard_batches)');
-const hasChampionName = (shardBatchesColumns.rows as unknown as { name: string }[]).some(
-  (col) => col.name === 'champion_name',
+const shardBatchesColumnNames = new Set(
+  (shardBatchesColumns.rows as unknown as { name: string }[]).map((col) => col.name),
 );
-if (!hasChampionName) {
+if (!shardBatchesColumnNames.has('champion_name')) {
   const migrationSql = readFileSync(join(__dirname, 'migrations', '003_champion_name.sql'), 'utf-8');
+  await client.executeMultiple(migrationSql);
+}
+if (!shardBatchesColumnNames.has('champion_id')) {
+  const migrationSql = readFileSync(join(__dirname, 'migrations', '005_champion_id.sql'), 'utf-8');
   await client.executeMultiple(migrationSql);
 }

@@ -8,6 +8,16 @@ interface HistoryTabProps {
   drops: DropRecord[];
 }
 
+function ExternalLinkIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M14 4h6v6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M20 4 10 14" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function DropRow({ drop }: { drop: DropRecord }) {
   const meta = SHARD_META[drop.shardType];
 
@@ -34,9 +44,22 @@ function DropRow({ drop }: { drop: DropRecord }) {
         )}
       </div>
       <div className="flex shrink-0 items-center gap-3 text-xs">
-        <span className={drop.championName ? 'text-slate-300' : 'text-slate-500 italic'}>
-          {drop.championName || meta.genericChampionLabel}
-        </span>
+        {drop.championUrl ? (
+          <a
+            href={drop.championUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Zobrazit šampiona na HellHades"
+            className="flex items-center gap-1 text-slate-300 hover:text-slate-100 hover:underline"
+          >
+            <span>{drop.championName}</span>
+            <ExternalLinkIcon />
+          </a>
+        ) : (
+          <span className={drop.championName ? 'text-slate-300' : 'text-slate-500 italic'}>
+            {drop.championName || meta.genericChampionLabel}
+          </span>
+        )}
         <span className="text-slate-500 tabular-nums">{formatDateTime(drop.createdAt)}</span>
       </div>
     </div>

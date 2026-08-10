@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { MERCY_CONFIGS, SHARD_TYPES, type ShardType } from '@rsl/mercy-calc';
-import { listChampionNames, listDrops } from '../repository.js';
+import { listChampionsForShardType, listDrops } from '../repository.js';
 
 function isShardType(value: string): value is ShardType {
   return (SHARD_TYPES as string[]).includes(value);
@@ -26,6 +26,6 @@ export async function dropRoutes(app: FastifyInstance) {
     if (!isShardType(shardType)) {
       return reply.code(400).send({ error: 'Invalid shardType' });
     }
-    return listChampionNames(request.profileId!, shardType);
+    return listChampionsForShardType(shardType);
   });
 }
