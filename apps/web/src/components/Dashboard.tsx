@@ -55,8 +55,8 @@ export function Dashboard({ onOpenHistory }: DashboardProps) {
             <button
               type="button"
               onClick={() => setShowEventsAdmin(true)}
-              title="Spravovat 2x eventy"
-              aria-label="Spravovat 2x eventy"
+              title="Spravovat eventy"
+              aria-label="Spravovat eventy"
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-amber-300"
             >
               <LightningIcon />
