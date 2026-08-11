@@ -7,9 +7,11 @@ interface EventsAdminModalProps {
   onClose: () => void;
 }
 
+type EventKind = 'MULTIPLIER' | 'EXTRA_LEGENDARY';
+
 const LEGENDARY_SHARDS: ShardType[] = ['ANCIENT', 'VOID', 'SACRED'];
 const MYTHICAL_SHARDS: ShardType[] = ['PRIMAL'];
-const EVENT_SHARD_TYPES: ShardType[] = [...LEGENDARY_SHARDS, ...MYTHICAL_SHARDS];
+const MULTIPLIER_SHARD_TYPES: ShardType[] = [...LEGENDARY_SHARDS, ...MYTHICAL_SHARDS];
 
 interface EventGroup {
   groupId: string;
@@ -17,6 +19,7 @@ interface EventGroup {
   startAt: string;
   endAt: string;
   label: string | null;
+  kind: EventKind;
 }
 
 function todayIsoUtc(): string {
@@ -36,6 +39,7 @@ function groupEvents(events: MercyEvent[]): EventGroup[] {
     startAt: rows[0].startAt,
     endAt: rows[0].endAt,
     label: rows[0].label,
+    kind: rows[0].kind,
   }));
 }
 
@@ -72,6 +76,7 @@ function toIsoUtc(date: string, time: string): string {
 
 export function EventsAdminModal({ onClose }: EventsAdminModalProps) {
   const [events, setEvents] = useState<MercyEvent[] | null>(null);
+  const [kind, setKind] = useState<EventKind>('MULTIPLIER');
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<ShardType>>(new Set());
   const [startDate, setStartDate] = useState(todayIsoUtc());
@@ -110,7 +115,7 @@ export function EventsAdminModal({ onClose }: EventsAdminModalProps) {
     setSubmitting(true);
     setError(null);
     try {
-      await createEvent(Array.from(selected), startAt, endAt, label);
+      await createEvent(Array.from(selected), startAt, endAt, label, kind);
       setSelected(new Set());
       setLabel('');
       load();
@@ -139,28 +144,63 @@ export function EventsAdminModal({ onClose }: EventsAdminModalProps) {
         className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 p-5"
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="mb-4 text-sm font-semibold">Naplánovat 2x event</p>
+        <p className="mb-4 text-sm font-semibold">
+          Naplánovat {kind === 'EXTRA_LEGENDARY' ? 'Extra Legendary event' : '2x event'}
+        </p>
 
         <form onSubmit={handleCreate} className="mb-5 border-b border-slate-800 pb-5">
-          <p className="mb-1.5 text-xs text-slate-400">Shardy</p>
-          <div className="mb-2 flex flex-wrap gap-1.5">
+          <div className="mb-3 flex gap-1.5">
             <button
               type="button"
-              onClick={() => setSelected(new Set(LEGENDARY_SHARDS))}
-              className="rounded-full border border-slate-700 bg-slate-800 px-2.5 py-1 text-xs text-slate-300 hover:bg-slate-700"
+              onClick={() => {
+                setKind('MULTIPLIER');
+                setSelected(new Set());
+              }}
+              className={`flex-1 rounded-lg border px-2.5 py-1.5 text-xs font-medium ${
+                kind === 'MULTIPLIER'
+                  ? 'border-amber-500/50 bg-amber-500/10 text-amber-300'
+                  : 'border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700'
+              }`}
             >
-              Legendary
+              ⚡ 2x event
             </button>
             <button
               type="button"
-              onClick={() => setSelected(new Set(MYTHICAL_SHARDS))}
-              className="rounded-full border border-slate-700 bg-slate-800 px-2.5 py-1 text-xs text-slate-300 hover:bg-slate-700"
+              onClick={() => {
+                setKind('EXTRA_LEGENDARY');
+                setSelected(new Set());
+              }}
+              className={`flex-1 rounded-lg border px-2.5 py-1.5 text-xs font-medium ${
+                kind === 'EXTRA_LEGENDARY'
+                  ? 'border-orange-500/50 bg-orange-500/10 text-orange-300'
+                  : 'border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700'
+              }`}
             >
-              Mythical
+              🔥 Extra Legendary event
             </button>
           </div>
+
+          <p className="mb-1.5 text-xs text-slate-400">Shardy</p>
+          {kind === 'MULTIPLIER' && (
+            <div className="mb-2 flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => setSelected(new Set(LEGENDARY_SHARDS))}
+                className="rounded-full border border-slate-700 bg-slate-800 px-2.5 py-1 text-xs text-slate-300 hover:bg-slate-700"
+              >
+                Legendary
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelected(new Set(MYTHICAL_SHARDS))}
+                className="rounded-full border border-slate-700 bg-slate-800 px-2.5 py-1 text-xs text-slate-300 hover:bg-slate-700"
+              >
+                Mythical
+              </button>
+            </div>
+          )}
           <div className="mb-3 flex flex-wrap gap-3">
-            {EVENT_SHARD_TYPES.map((shardType) => (
+            {(kind === 'EXTRA_LEGENDARY' ? LEGENDARY_SHARDS : MULTIPLIER_SHARD_TYPES).map((shardType) => (
               <label key={shardType} className="flex items-center gap-1.5 text-xs text-slate-300">
                 <input
                   type="checkbox"
@@ -230,7 +270,11 @@ export function EventsAdminModal({ onClose }: EventsAdminModalProps) {
           <button
             type="submit"
             disabled={selected.size === 0 || !rangeValid || submitting}
-            className="h-9 w-full rounded-lg border border-amber-500/40 bg-amber-500/10 px-3.5 text-amber-300 hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+            className={`h-9 w-full rounded-lg border px-3.5 disabled:cursor-not-allowed disabled:opacity-50 ${
+              kind === 'EXTRA_LEGENDARY'
+                ? 'border-orange-500/40 bg-orange-500/10 text-orange-300 hover:bg-orange-500/20'
+                : 'border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
+            }`}
           >
             {submitting ? 'Ukládám…' : 'Naplánovat event'}
           </button>
@@ -245,12 +289,15 @@ export function EventsAdminModal({ onClose }: EventsAdminModalProps) {
               key={group.groupId}
               className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs ${
                 isActiveNow(group.startAt, group.endAt)
-                  ? 'border-amber-500/50 bg-amber-500/10 text-amber-200'
+                  ? group.kind === 'EXTRA_LEGENDARY'
+                    ? 'border-orange-500/50 bg-orange-500/10 text-orange-200'
+                    : 'border-amber-500/50 bg-amber-500/10 text-amber-200'
                   : 'border-slate-800 bg-slate-800/50 text-slate-400'
               }`}
             >
               <div>
                 <p className="font-medium">
+                  {group.kind === 'EXTRA_LEGENDARY' ? '🔥 Extra Legendary' : '⚡ 2x'} —{' '}
                   {group.shardTypes.map((s) => SHARD_META[s].label).join(', ')}
                   {group.label ? ` — ${group.label}` : ''}
                 </p>

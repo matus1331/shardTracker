@@ -88,6 +88,7 @@ export async function correctSinceLastDrop(
   value: number,
   gotDrop: boolean,
   championName?: string | null,
+  extraChampionName?: string | null,
 ): Promise<ShardCounterRow> {
   const tx = await client.transaction('write');
   try {
@@ -95,12 +96,13 @@ export async function correctSinceLastDrop(
     const before = toShardCounterRow(beforeRs.rows[0] as unknown as RawCounterRow);
     const after = gotDrop ? 0 : value;
     const lifetimeDelta = value - before.sinceLastDrop;
+    const dropCount = gotDrop ? (extraChampionName ? 2 : 1) : 0;
 
     await tx.execute({
       sql: `UPDATE shard_counters
             SET since_last_drop = ?, lifetime_opened = lifetime_opened + ?, lifetime_drops = lifetime_drops + ?, updated_at = datetime('now')
             WHERE profile_id = ? AND shard_type = ?`,
-      args: [after, lifetimeDelta, gotDrop ? 1 : 0, profileId, shardType],
+      args: [after, lifetimeDelta, dropCount, profileId, shardType],
     });
 
     // Exact, case-insensitive match (COLLATE NOCASE on champions.name) scoped to this shard
@@ -118,11 +120,31 @@ export async function correctSinceLastDrop(
       championId = championRow ? Number(championRow.hero_id) : null;
     }
 
+    let extraChampionId: number | null = null;
+    if (extraChampionName) {
+      const extraChampionRs = await tx.execute({
+        sql: `SELECT hero_id FROM champions WHERE ${championPoolWhereClause(shardType)} AND name = ?`,
+        args: [extraChampionName],
+      });
+      const extraChampionRow = extraChampionRs.rows[0] as unknown as { hero_id: number } | undefined;
+      extraChampionId = extraChampionRow ? Number(extraChampionRow.hero_id) : null;
+    }
+
     await tx.execute({
       sql: `INSERT INTO shard_batches
-              (profile_id, shard_type, action_type, amount, got_drop, since_last_drop_before, since_last_drop_after, champion_name, champion_id)
-            VALUES (?, ?, 'CORRECTION', NULL, ?, ?, ?, ?, ?)`,
-      args: [profileId, shardType, gotDrop ? 1 : 0, before.sinceLastDrop, after, championName ?? null, championId],
+              (profile_id, shard_type, action_type, amount, got_drop, since_last_drop_before, since_last_drop_after, champion_name, champion_id, extra_champion_name, extra_champion_id)
+            VALUES (?, ?, 'CORRECTION', NULL, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [
+        profileId,
+        shardType,
+        gotDrop ? 1 : 0,
+        before.sinceLastDrop,
+        after,
+        championName ?? null,
+        championId,
+        extraChampionName ?? null,
+        extraChampionId,
+      ],
     });
 
     const afterRs = await tx.execute({ sql: SELECT_COUNTER_SQL, args: [profileId, shardType] });
@@ -142,7 +164,9 @@ export interface DropRow {
   seriesNumber: number;
   championName: string | null;
   championUrl: string | null;
-  duringEvent: boolean;
+  extraChampionName: string | null;
+  extraChampionUrl: string | null;
+  eventKind: 'MULTIPLIER' | 'EXTRA_LEGENDARY' | null;
 }
 
 interface RawDropRow {
@@ -151,20 +175,27 @@ interface RawDropRow {
   since_last_drop_before: number;
   champion_name: string | null;
   champion_url: string | null;
-  during_event: number;
+  extra_champion_name: string | null;
+  extra_champion_url: string | null;
+  event_kind: 'MULTIPLIER' | 'EXTRA_LEGENDARY' | null;
 }
 
 export async function listDrops(profileId: number): Promise<DropRow[]> {
   const rs = await client.execute({
-    sql: `SELECT sb.shard_type, sb.created_at, sb.since_last_drop_before, sb.champion_name, c.hellhades_url AS champion_url,
-                 EXISTS (
-                   SELECT 1 FROM mercy_events me
+    sql: `SELECT sb.shard_type, sb.created_at, sb.since_last_drop_before,
+                 sb.champion_name, c.hellhades_url AS champion_url,
+                 sb.extra_champion_name, ec.hellhades_url AS extra_champion_url,
+                 (
+                   SELECT me.kind FROM mercy_events me
                    WHERE me.shard_type = sb.shard_type
                      AND datetime(me.start_at) <= datetime(sb.created_at)
                      AND datetime(me.end_at) >= datetime(sb.created_at)
-                 ) AS during_event
+                   ORDER BY me.id DESC
+                   LIMIT 1
+                 ) AS event_kind
           FROM shard_batches sb
           LEFT JOIN champions c ON c.hero_id = sb.champion_id
+          LEFT JOIN champions ec ON ec.hero_id = sb.extra_champion_id
           WHERE sb.profile_id = ? AND sb.got_drop = 1
           ORDER BY sb.created_at DESC, sb.id DESC`,
     args: [profileId],
@@ -175,7 +206,9 @@ export async function listDrops(profileId: number): Promise<DropRow[]> {
     seriesNumber: Number(row.since_last_drop_before),
     championName: row.champion_name,
     championUrl: row.champion_url,
-    duringEvent: Boolean(Number(row.during_event)),
+    extraChampionName: row.extra_champion_name,
+    extraChampionUrl: row.extra_champion_url,
+    eventKind: row.event_kind,
   }));
 }
 
@@ -322,6 +355,7 @@ export interface MercyEventRow {
   startAt: string;
   endAt: string;
   multiplier: number;
+  kind: 'MULTIPLIER' | 'EXTRA_LEGENDARY';
   label: string | null;
 }
 
@@ -332,6 +366,7 @@ interface RawMercyEventRow {
   start_at: string;
   end_at: string;
   multiplier: number;
+  kind: 'MULTIPLIER' | 'EXTRA_LEGENDARY';
   label: string | null;
 }
 
@@ -343,11 +378,12 @@ function toMercyEventRow(row: RawMercyEventRow): MercyEventRow {
     startAt: row.start_at,
     endAt: row.end_at,
     multiplier: Number(row.multiplier),
+    kind: row.kind,
     label: row.label,
   };
 }
 
-const MERCY_EVENT_COLUMNS = 'id, group_id, shard_type, start_at, end_at, multiplier, label';
+const MERCY_EVENT_COLUMNS = 'id, group_id, shard_type, start_at, end_at, multiplier, kind, label';
 
 export async function listMercyEvents(): Promise<MercyEventRow[]> {
   const rs = await client.execute(
@@ -384,15 +420,17 @@ export async function createMercyEvent(
   startAt: string,
   endAt: string,
   label: string | null,
+  kind: 'MULTIPLIER' | 'EXTRA_LEGENDARY',
 ): Promise<string> {
   const groupId = randomUUID();
+  const multiplier = kind === 'EXTRA_LEGENDARY' ? 1.0 : 2.0;
   const tx = await client.transaction('write');
   try {
     for (const shardType of shardTypes) {
       await tx.execute({
-        sql: `INSERT INTO mercy_events (group_id, shard_type, start_at, end_at, multiplier, label)
-              VALUES (?, ?, ?, ?, 2.0, ?)`,
-        args: [groupId, shardType, startAt, endAt, label],
+        sql: `INSERT INTO mercy_events (group_id, shard_type, start_at, end_at, multiplier, label, kind)
+              VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        args: [groupId, shardType, startAt, endAt, multiplier, label, kind],
       });
     }
     await tx.commit();

@@ -3,6 +3,7 @@ import { SHARD_TYPES, type ShardType } from '@rsl/mercy-calc';
 import type { DropRecord } from '../types';
 import { SHARD_META } from '../types';
 import { formatDateTime } from '../utils/formatDateTime';
+import { EXTRA_LEGENDARY_BADGE_CLASS, EXTRA_LEGENDARY_BADGE_LABEL } from '../utils/eventBadge';
 
 interface HistoryTabProps {
   drops: DropRecord[];
@@ -37,29 +38,49 @@ function DropRow({ drop }: { drop: DropRecord }) {
         >
           {drop.mercyActive ? 'V MERCY' : 'MIMO MERCY'}
         </span>
-        {drop.duringEvent && (
+        {drop.eventKind === 'MULTIPLIER' && (
           <span className="rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 px-2 py-0.5 text-[10px] font-bold tracking-wide text-slate-900">
             ⚡ 2×
           </span>
         )}
+        {drop.eventKind === 'EXTRA_LEGENDARY' && (
+          <span className={EXTRA_LEGENDARY_BADGE_CLASS}>{EXTRA_LEGENDARY_BADGE_LABEL}</span>
+        )}
       </div>
       <div className="flex shrink-0 items-center gap-3 text-xs">
-        {drop.championUrl ? (
-          <a
-            href={drop.championUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Zobrazit šampiona na HellHades"
-            className="flex items-center gap-1 text-slate-300 hover:text-slate-100 hover:underline"
-          >
-            <span>{drop.championName}</span>
-            <ExternalLinkIcon />
-          </a>
-        ) : (
-          <span className={drop.championName ? 'text-slate-300' : 'text-slate-500 italic'}>
-            {drop.championName || meta.genericChampionLabel}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {drop.championUrl ? (
+            <a
+              href={drop.championUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Zobrazit šampiona na HellHades"
+              className="flex items-center gap-1 text-slate-300 hover:text-slate-100 hover:underline"
+            >
+              <span>{drop.championName}</span>
+              <ExternalLinkIcon />
+            </a>
+          ) : (
+            <span className={drop.championName ? 'text-slate-300' : 'text-slate-500 italic'}>
+              {drop.championName || meta.genericChampionLabel}
+            </span>
+          )}
+          {drop.extraChampionName &&
+            (drop.extraChampionUrl ? (
+              <a
+                href={drop.extraChampionUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Zobrazit šampiona na HellHades"
+                className="flex items-center gap-1 text-orange-300 hover:text-orange-200 hover:underline"
+              >
+                <span>+ {drop.extraChampionName}</span>
+                <ExternalLinkIcon />
+              </a>
+            ) : (
+              <span className="text-orange-300">+ {drop.extraChampionName}</span>
+            ))}
+        </div>
         <span className="text-slate-500 tabular-nums">{formatDateTime(drop.createdAt)}</span>
       </div>
     </div>

@@ -137,7 +137,7 @@ function EventEfficiencyRow({
   const meta = SHARD_META[shardType];
   const typeDrops = drops.filter((d) => d.shardType === shardType);
   const total = typeDrops.length;
-  const duringEvent = typeDrops.filter((d) => d.duringEvent).length;
+  const duringEvent = typeDrops.filter((d) => d.eventKind === 'MULTIPLIER').length;
   const pct = total > 0 ? Math.round((duringEvent / total) * 100) : null;
 
   return (

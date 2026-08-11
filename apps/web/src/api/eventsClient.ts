@@ -8,6 +8,7 @@ export interface MercyEvent {
   startAt: string;
   endAt: string;
   multiplier: number;
+  kind: 'MULTIPLIER' | 'EXTRA_LEGENDARY';
   label: string | null;
 }
 
@@ -28,12 +29,13 @@ export function createEvent(
   startAt: string,
   endAt: string,
   label: string,
+  kind: 'MULTIPLIER' | 'EXTRA_LEGENDARY',
 ): Promise<{ groupId: string }> {
   return fetch('/api/events', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ shardTypes, startAt, endAt, label: label.trim() || undefined }),
+    body: JSON.stringify({ shardTypes, startAt, endAt, label: label.trim() || undefined, kind }),
   }).then((res) => handleEventsResponse<{ groupId: string }>(res));
 }
 

@@ -16,11 +16,12 @@ function isShardType(value: string): value is ShardType {
 
 function withChance(row: ShardCounterRow, activeEvents: Map<ShardType, MercyEventRow>) {
   const activeEvent = activeEvents.get(row.shardType);
+  const multiplier = activeEvent?.kind === 'MULTIPLIER' ? activeEvent.multiplier : 1;
   return {
     ...row,
-    currentChance: calculateDropChance(row.shardType, row.sinceLastDrop, { multiplier: activeEvent?.multiplier ?? 1 }),
+    currentChance: calculateDropChance(row.shardType, row.sinceLastDrop, { multiplier }),
     activeEvent: activeEvent
-      ? { multiplier: activeEvent.multiplier, endAt: activeEvent.endAt, label: activeEvent.label }
+      ? { multiplier: activeEvent.multiplier, endAt: activeEvent.endAt, label: activeEvent.label, kind: activeEvent.kind }
       : null,
   };
 }
@@ -57,32 +58,48 @@ export async function shardRoutes(app: FastifyInstance) {
     },
   );
 
-  app.put<{ Params: { shardType: string }; Body: { value?: number; gotDrop?: boolean; championName?: string } }>(
-    '/api/shards/:shardType/since-last-drop',
-    async (request, reply) => {
-      const { shardType } = request.params;
-      const { value, gotDrop = false, championName } = request.body ?? {};
+  app.put<{
+    Params: { shardType: string };
+    Body: { value?: number; gotDrop?: boolean; championName?: string; extraChampionName?: string };
+  }>('/api/shards/:shardType/since-last-drop', async (request, reply) => {
+    const { shardType } = request.params;
+    const { value, gotDrop = false, championName, extraChampionName } = request.body ?? {};
 
-      if (!isShardType(shardType)) {
-        return reply.code(400).send({ error: 'Invalid shardType' });
-      }
-      if (!Number.isInteger(value) || (value as number) < 0) {
-        return reply.code(400).send({ error: 'value must be an integer >= 0' });
-      }
+    if (!isShardType(shardType)) {
+      return reply.code(400).send({ error: 'Invalid shardType' });
+    }
+    if (!Number.isInteger(value) || (value as number) < 0) {
+      return reply.code(400).send({ error: 'value must be an integer >= 0' });
+    }
 
-      const trimmedChampionName = championName?.trim().slice(0, 80) || null;
-      if (trimmedChampionName && !(await isChampionInShardPool(shardType, trimmedChampionName))) {
-        return reply.code(400).send({ error: 'Invalid championName for this shard type' });
+    const trimmedChampionName = championName?.trim().slice(0, 80) || null;
+    if (trimmedChampionName && !(await isChampionInShardPool(shardType, trimmedChampionName))) {
+      return reply.code(400).send({ error: 'Invalid championName for this shard type' });
+    }
+
+    const activeEvents = await getActiveMercyEvents([shardType]);
+
+    const trimmedExtraChampionName = extraChampionName?.trim().slice(0, 80) || null;
+    if (trimmedExtraChampionName) {
+      if (!gotDrop) {
+        return reply.code(400).send({ error: 'extraChampionName requires gotDrop' });
       }
-      const updated = await correctSinceLastDrop(
-        request.profileId!,
-        shardType,
-        value as number,
-        gotDrop,
-        trimmedChampionName,
-      );
-      const activeEvents = await getActiveMercyEvents([shardType]);
-      return withChance(updated, activeEvents);
-    },
-  );
+      if (activeEvents.get(shardType)?.kind !== 'EXTRA_LEGENDARY') {
+        return reply.code(400).send({ error: 'No active Extra Legendary event for this shard type' });
+      }
+      if (!(await isChampionInShardPool(shardType, trimmedExtraChampionName))) {
+        return reply.code(400).send({ error: 'Invalid extraChampionName for this shard type' });
+      }
+    }
+
+    const updated = await correctSinceLastDrop(
+      request.profileId!,
+      shardType,
+      value as number,
+      gotDrop,
+      trimmedChampionName,
+      trimmedExtraChampionName,
+    );
+    return withChance(updated, activeEvents);
+  });
 }

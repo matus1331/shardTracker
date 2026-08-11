@@ -45,3 +45,17 @@ if (!shardBatchesColumnNames.has('champion_id')) {
   const migrationSql = readFileSync(join(__dirname, 'migrations', '005_champion_id.sql'), 'utf-8');
   await client.executeMultiple(migrationSql);
 }
+
+const mercyEventsColumns = await client.execute('PRAGMA table_info(mercy_events)');
+const mercyEventsColumnNames = new Set(
+  (mercyEventsColumns.rows as unknown as { name: string }[]).map((col) => col.name),
+);
+if (!mercyEventsColumnNames.has('kind')) {
+  const migrationSql = readFileSync(join(__dirname, 'migrations', '006_event_kind.sql'), 'utf-8');
+  await client.executeMultiple(migrationSql);
+}
+
+if (!shardBatchesColumnNames.has('extra_champion_id')) {
+  const migrationSql = readFileSync(join(__dirname, 'migrations', '007_extra_champion.sql'), 'utf-8');
+  await client.executeMultiple(migrationSql);
+}

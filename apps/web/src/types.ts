@@ -5,6 +5,7 @@ export interface ActiveMercyEvent {
   /** ISO 8601 UTC datetime, e.g. '2026-07-27T08:00:00Z'. */
   endAt: string;
   label: string | null;
+  kind: 'MULTIPLIER' | 'EXTRA_LEGENDARY';
 }
 
 export interface ShardCounterState {
@@ -25,7 +26,10 @@ export interface DropRecord {
   championName: string | null;
   /** Link to the champion's HellHades detail/rating page, if the name matched a known champion. */
   championUrl: string | null;
-  duringEvent: boolean;
+  /** Bonus champion from an active Extra Legendary event, if the player reported one. */
+  extraChampionName: string | null;
+  extraChampionUrl: string | null;
+  eventKind: 'MULTIPLIER' | 'EXTRA_LEGENDARY' | null;
   mercyActive: boolean;
 }
 
