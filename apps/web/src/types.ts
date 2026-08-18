@@ -8,6 +8,13 @@ export interface ActiveMercyEvent {
   kind: 'MULTIPLIER' | 'EXTRA_LEGENDARY';
 }
 
+export interface LegendaryMercyState {
+  sinceLastDrop: number;
+  lifetimeOpened: number;
+  lifetimeDrops: number;
+  currentChance: number;
+}
+
 export interface ShardCounterState {
   shardType: ShardType;
   sinceLastDrop: number;
@@ -15,6 +22,8 @@ export interface ShardCounterState {
   lifetimeDrops: number;
   currentChance: number;
   activeEvent: ActiveMercyEvent | null;
+  /** Primal's independent Legendary pity track. Null for every other shard type. */
+  legendaryTrack: LegendaryMercyState | null;
 }
 
 export interface DropRecord {
@@ -31,6 +40,8 @@ export interface DropRecord {
   extraChampionUrl: string | null;
   eventKind: 'MULTIPLIER' | 'EXTRA_LEGENDARY' | null;
   mercyActive: boolean;
+  /** Which of Primal's two tracks this drop belongs to. Null for every other shard type. */
+  rarity: 'LEGENDARY' | 'MYTHICAL' | null;
 }
 
 export interface ShardMeta {
