@@ -131,7 +131,14 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
             {currentChancePct}%
           </span>
         </div>
-        <p className="text-[11px] text-slate-500">{mercyActive ? 'mercy aktivní' : 'mimo mercy'}</p>
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] text-slate-500">{mercyActive ? 'mercy aktivní' : 'mimo mercy'}</p>
+          {legendary && (
+            <span className="rounded-full bg-[#A30000]/20 px-2 py-0.5 text-[10px] font-bold tracking-wide text-[#E05B5B] uppercase">
+              Mythical
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="relative mb-3">
@@ -158,27 +165,22 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
 
       {legendary && legendaryProgress && legendaryCaption && (
         <div className="relative mb-3 border-t border-slate-800 pt-3">
-          <div className="mb-1.5 flex items-center gap-2">
-            <span className="rounded-full bg-[#A30000]/20 px-2 py-0.5 text-[10px] font-bold tracking-wide text-[#E05B5B] uppercase">
-              Mythical
-            </span>
+          <span className="font-mono text-lg font-bold tabular-nums text-amber-400">{(legendary.currentChance * 100).toFixed(1)}%</span>
+          <div className="mt-1 mb-1.5 flex items-center justify-between">
+            <span className="text-[11px] text-slate-500">{legendaryProgress.mercyActive ? 'mercy aktivní' : 'mimo mercy'}</span>
             <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-bold tracking-wide text-amber-400 uppercase">
               Legendary
             </span>
-            <span className="ml-auto text-[11px] text-slate-500">{legendaryProgress.mercyActive ? 'mercy aktivní' : 'mimo mercy'}</span>
           </div>
-          <span className="font-mono text-lg font-bold tabular-nums text-amber-400">{(legendary.currentChance * 100).toFixed(1)}%</span>
-          <div className="mt-1.5">
-            <MercyProgressBar
-              mercyThreshold={legendaryProgress.mercyThreshold}
-              guaranteedAt={legendaryProgress.guaranteedAt}
-              preMercyProgress={legendaryProgress.preMercyProgress}
-              mercyProgress={legendaryProgress.mercyProgress}
-              fillClass="bg-amber-500"
-              neonBgClass="bg-amber-400"
-              neonGlowClass="shadow-[0_0_10px_2px_rgba(251,191,36,0.8)]"
-            />
-          </div>
+          <MercyProgressBar
+            mercyThreshold={legendaryProgress.mercyThreshold}
+            guaranteedAt={legendaryProgress.guaranteedAt}
+            preMercyProgress={legendaryProgress.preMercyProgress}
+            mercyProgress={legendaryProgress.mercyProgress}
+            fillClass="bg-amber-500"
+            neonBgClass="bg-amber-400"
+            neonGlowClass="shadow-[0_0_10px_2px_rgba(251,191,36,0.8)]"
+          />
           <div className="font-mono mt-1 text-[11px] tabular-nums text-slate-500">
             <span className="text-slate-400">{legendaryCaption.primary}</span> · {legendaryCaption.secondary}
           </div>
