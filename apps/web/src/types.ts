@@ -54,6 +54,9 @@ export interface ShardMeta {
   borderClass: string;
   /** Normal-saturation shard color, used for the dot and the pre-mercy bar segment. */
   fillClass: string;
+  /** Literal Tailwind `to-*` class (not derived at runtime, so the JIT scanner can see it)
+   * for the hero-number gradient's end color. */
+  gradientToClass: string;
   /** Brighter neon background used for the active-mercy bar segment. */
   neonBgClass: string;
   /** Glow shadow for the active-mercy bar segment, applied only once it has visible fill. */
@@ -77,6 +80,7 @@ export const SHARD_META: Record<ShardType, ShardMeta> = {
     dotClass: "bg-blue-500",
     borderClass: "border-t-blue-500",
     fillClass: "bg-blue-500",
+    gradientToClass: "to-blue-400",
     neonBgClass: "bg-blue-400",
     neonGlowClass: "shadow-[0_0_10px_2px_rgba(59,130,246,0.8)]",
     eventAccentClass: "border-blue-400 shadow-[0_0_18px_3px_rgba(59,130,246,0.5)]",
@@ -95,6 +99,7 @@ export const SHARD_META: Record<ShardType, ShardMeta> = {
     dotClass: "bg-violet-500",
     borderClass: "border-t-violet-500",
     fillClass: "bg-violet-500",
+    gradientToClass: "to-violet-400",
     neonBgClass: "bg-violet-400",
     neonGlowClass: "shadow-[0_0_10px_2px_rgba(139,92,246,0.8)]",
     eventAccentClass: "border-violet-400 shadow-[0_0_18px_3px_rgba(139,92,246,0.5)]",
@@ -113,6 +118,7 @@ export const SHARD_META: Record<ShardType, ShardMeta> = {
     dotClass: "bg-[#A30000]",
     borderClass: "border-t-[#A30000]",
     fillClass: "bg-[#A30000]",
+    gradientToClass: "to-[#C83232]",
     neonBgClass: "bg-[#C83232]",
     neonGlowClass: "shadow-[0_0_10px_2px_rgba(200,50,50,0.8)]",
     eventAccentClass: "border-[#C83232] shadow-[0_0_18px_3px_rgba(200,50,50,0.5)]",
@@ -131,6 +137,7 @@ export const SHARD_META: Record<ShardType, ShardMeta> = {
     dotClass: "bg-amber-400",
     borderClass: "border-t-amber-400",
     fillClass: "bg-amber-400",
+    gradientToClass: "to-amber-400",
     neonBgClass: "bg-amber-300",
     neonGlowClass: "shadow-[0_0_10px_2px_rgba(245,158,11,0.8)]",
     eventAccentClass: "border-amber-300 shadow-[0_0_18px_3px_rgba(245,158,11,0.5)]",
@@ -149,6 +156,7 @@ export const SHARD_META: Record<ShardType, ShardMeta> = {
     dotClass: "bg-[#A30000]",
     borderClass: "border-t-[#A30000]",
     fillClass: "bg-[#A30000]",
+    gradientToClass: "to-[#C83232]",
     neonBgClass: "bg-[#C83232]",
     neonGlowClass: "shadow-[0_0_10px_2px_rgba(200,50,50,0.8)]",
     eventAccentClass: "border-[#C83232] shadow-[0_0_18px_3px_rgba(200,50,50,0.5)]",

@@ -92,19 +92,22 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
 
   return (
     <div
-      className={`rounded-xl bg-slate-900 p-3 sm:p-4 ${
+      className={`relative overflow-hidden rounded-[22px] bg-slate-900 p-4 sm:p-5 ${
         isExtraLegendaryEvent
           ? `border-2 ${EXTRA_LEGENDARY_CARD_ACCENT_CLASS} animate-[pulse_2.4s_ease-in-out_infinite] motion-reduce:animate-none`
           : isMultiplierEvent
             ? `border-2 ${meta.eventAccentClass} animate-[pulse_2.4s_ease-in-out_infinite] motion-reduce:animate-none`
-            : `border border-slate-800 border-l-[3px] ${meta.borderClass}`
+            : 'border border-slate-800'
       }`}
     >
-      <div className="mb-2 flex items-center gap-2 sm:mb-3 sm:gap-2.5">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-950/60 ring-1 ring-slate-800 sm:h-11 sm:w-11 sm:rounded-xl">
-          <ShardIcon shardType={data.shardType} className="h-6 w-6 sm:h-7 sm:w-7" />
+      <div className={`pointer-events-none absolute -top-12 -left-12 h-40 w-40 rounded-full opacity-20 blur-3xl ${meta.fillClass}`} />
+
+      <div className="relative mb-3 flex items-center gap-2.5">
+        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-950/60 ring-1 ring-slate-800 sm:h-11 sm:w-11">
+          <div className={`absolute inset-0 rounded-xl opacity-35 blur-md ${meta.fillClass}`} />
+          <ShardIcon shardType={data.shardType} className="relative h-7 w-7" />
         </div>
-        <span className="flex-1 text-[13px] font-semibold">{meta.label}</span>
+        <span className="font-display flex-1 text-[14px] font-semibold">{meta.label}</span>
         {isMultiplierEvent && (
           <span className="animate-[pulse_2.4s_ease-in-out_infinite] rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 px-2 py-0.5 text-[10px] font-bold tracking-wide text-slate-900 shadow-[0_0_8px_1px_rgba(251,191,36,0.6)] motion-reduce:animate-none">
             ⚡ 2×
@@ -113,20 +116,25 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
         {isExtraLegendaryEvent && <span className={EXTRA_LEGENDARY_BADGE_CLASS}>{EXTRA_LEGENDARY_BADGE_LABEL}</span>}
       </div>
 
-      <div className="mb-1.5 flex items-baseline gap-1.5">
-        {isMultiplierEvent && (
-          <>
-            <span className="text-sm text-slate-500 line-through tabular-nums">{baseChancePct}%</span>
-            <span className="text-sm text-slate-500">→</span>
-          </>
-        )}
-        <span className="text-xl font-bold tabular-nums sm:text-2xl">{currentChancePct}%</span>
-        <span className="text-[11px] whitespace-nowrap text-slate-500">
-          {mercyActive ? 'mercy aktivní' : 'aktuální šance'}
-        </span>
+      <div className="relative mb-3">
+        <p className="mb-0.5 text-[10.5px] font-semibold tracking-[0.1em] text-slate-500 uppercase">Aktuální šance</p>
+        <div className="mb-1 flex items-baseline gap-1.5">
+          {isMultiplierEvent && (
+            <>
+              <span className="font-mono text-sm text-slate-500 line-through tabular-nums">{baseChancePct}%</span>
+              <span className="text-sm text-slate-500">→</span>
+            </>
+          )}
+          <span
+            className={`font-mono bg-gradient-to-br from-white ${meta.gradientToClass} bg-clip-text text-2xl font-bold tabular-nums text-transparent sm:text-[28px]`}
+          >
+            {currentChancePct}%
+          </span>
+        </div>
+        <p className="text-[11px] text-slate-500">{mercyActive ? 'mercy aktivní' : 'mimo mercy'}</p>
       </div>
 
-      <div className="mb-3">
+      <div className="relative mb-3">
         <MercyProgressBar
           mercyThreshold={mercyThreshold}
           guaranteedAt={guaranteedAt}
@@ -142,36 +150,42 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
               ? formatEventCountdown(data.activeEvent.endAt, isExtraLegendaryEvent ? 'Extra Legendary event' : '2x event')
               : ''}
           </span>
-          <span className="text-slate-500">
+          <span className="font-mono text-slate-500">
             <span className="text-slate-400">{caption.primary}</span> · {caption.secondary}
           </span>
         </div>
       </div>
 
       {legendary && legendaryProgress && legendaryCaption && (
-        <div className="mb-3 border-t border-slate-800 pt-3">
-          <div className="mb-1.5 flex items-baseline gap-1.5">
-            <span className="text-lg font-bold tabular-nums text-amber-400">{(legendary.currentChance * 100).toFixed(1)}%</span>
-            <span className="text-[11px] whitespace-nowrap text-slate-500">
-              legendary · {legendaryProgress.mercyActive ? 'mercy aktivní' : 'mimo mercy'}
+        <div className="relative mb-3 border-t border-slate-800 pt-3">
+          <div className="mb-1.5 flex items-center gap-2">
+            <span className="rounded-full bg-[#A30000]/20 px-2 py-0.5 text-[10px] font-bold tracking-wide text-[#E05B5B] uppercase">
+              Mythical
             </span>
+            <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-bold tracking-wide text-amber-400 uppercase">
+              Legendary
+            </span>
+            <span className="ml-auto text-[11px] text-slate-500">{legendaryProgress.mercyActive ? 'mercy aktivní' : 'mimo mercy'}</span>
           </div>
-          <MercyProgressBar
-            mercyThreshold={legendaryProgress.mercyThreshold}
-            guaranteedAt={legendaryProgress.guaranteedAt}
-            preMercyProgress={legendaryProgress.preMercyProgress}
-            mercyProgress={legendaryProgress.mercyProgress}
-            fillClass="bg-amber-500"
-            neonBgClass="bg-amber-400"
-            neonGlowClass="shadow-[0_0_10px_2px_rgba(251,191,36,0.8)]"
-          />
-          <div className="mt-1 text-[11px] tabular-nums text-slate-500">
+          <span className="font-mono text-lg font-bold tabular-nums text-amber-400">{(legendary.currentChance * 100).toFixed(1)}%</span>
+          <div className="mt-1.5">
+            <MercyProgressBar
+              mercyThreshold={legendaryProgress.mercyThreshold}
+              guaranteedAt={legendaryProgress.guaranteedAt}
+              preMercyProgress={legendaryProgress.preMercyProgress}
+              mercyProgress={legendaryProgress.mercyProgress}
+              fillClass="bg-amber-500"
+              neonBgClass="bg-amber-400"
+              neonGlowClass="shadow-[0_0_10px_2px_rgba(251,191,36,0.8)]"
+            />
+          </div>
+          <div className="font-mono mt-1 text-[11px] tabular-nums text-slate-500">
             <span className="text-slate-400">{legendaryCaption.primary}</span> · {legendaryCaption.secondary}
           </div>
         </div>
       )}
 
-      <div className="flex items-start gap-2">
+      <div className="relative flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <LogShardsForm shardType={data.shardType} maxAmount={guaranteedAt - data.sinceLastDrop} onSubmit={onLog} />
         </div>
