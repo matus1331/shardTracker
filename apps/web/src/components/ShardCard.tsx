@@ -181,7 +181,7 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
             neonBgClass="bg-amber-400"
             neonGlowClass="shadow-[0_0_10px_2px_rgba(251,191,36,0.8)]"
           />
-          <div className="font-mono mt-1 text-[11px] tabular-nums text-slate-500">
+          <div className="font-mono mt-1 text-right text-[11px] tabular-nums text-slate-500">
             <span className="text-slate-400">{legendaryCaption.primary}</span> · {legendaryCaption.secondary}
           </div>
         </div>
