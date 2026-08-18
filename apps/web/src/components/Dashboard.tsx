@@ -74,15 +74,16 @@ export function Dashboard({ onOpenHistory }: DashboardProps) {
 
       {shards && (
         <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] sm:gap-4">
-          {shards.map((shard) => (
-            <ShardCard
-              key={shard.shardType}
-              data={shard}
-              onLog={logShards}
-              onCorrect={correctCount}
-              onConfirmDrop={confirmDrop}
-            />
-          ))}
+          {/* Primal carries two mercy tracks and is taller than every other card — sorting it
+              last and giving it the full row width (instead of squeezing it into a shared row)
+              avoids the row-height mismatch that stretched/gapped its neighbors. */}
+          {[...shards]
+            .sort((a, b) => (a.shardType === 'PRIMAL' ? 1 : b.shardType === 'PRIMAL' ? -1 : 0))
+            .map((shard) => (
+              <div key={shard.shardType} className={shard.shardType === 'PRIMAL' ? 'sm:col-span-full' : undefined}>
+                <ShardCard data={shard} onLog={logShards} onCorrect={correctCount} onConfirmDrop={confirmDrop} />
+              </div>
+            ))}
         </div>
       )}
 

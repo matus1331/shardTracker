@@ -116,76 +116,78 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
         {isExtraLegendaryEvent && <span className={EXTRA_LEGENDARY_BADGE_CLASS}>{EXTRA_LEGENDARY_BADGE_LABEL}</span>}
       </div>
 
-      <div className="relative mb-3">
-        <p className="mb-0.5 text-[10.5px] font-semibold tracking-[0.1em] text-slate-500 uppercase">Aktuální šance</p>
-        <div className="mb-1 flex items-baseline gap-1.5">
-          {isMultiplierEvent && (
-            <>
-              <span className="font-mono text-sm text-slate-500 line-through tabular-nums">{baseChancePct}%</span>
-              <span className="text-sm text-slate-500">→</span>
-            </>
-          )}
-          <span
-            className={`font-mono bg-gradient-to-br from-white ${meta.gradientToClass} bg-clip-text text-2xl font-bold tabular-nums text-transparent sm:text-[28px]`}
-          >
-            {currentChancePct}%
-          </span>
-        </div>
-        <div className="flex items-center justify-between">
-          <p className="text-[11px] text-slate-500">{mercyActive ? 'mercy aktivní' : 'mimo mercy'}</p>
-          {legendary && (
-            <span className="rounded-full bg-[#A30000]/20 px-2 py-0.5 text-[10px] font-bold tracking-wide text-[#E05B5B] uppercase">
-              Mythical
+      <div className={legendary ? 'sm:grid sm:grid-cols-2 sm:gap-x-8' : undefined}>
+        <div className="relative mb-3">
+          <p className="mb-0.5 text-[10.5px] font-semibold tracking-[0.1em] text-slate-500 uppercase">Aktuální šance</p>
+          <div className="mb-1 flex items-baseline gap-1.5">
+            {isMultiplierEvent && (
+              <>
+                <span className="font-mono text-sm text-slate-500 line-through tabular-nums">{baseChancePct}%</span>
+                <span className="text-sm text-slate-500">→</span>
+              </>
+            )}
+            <span
+              className={`font-mono bg-gradient-to-br from-white ${meta.gradientToClass} bg-clip-text text-2xl font-bold tabular-nums text-transparent sm:text-[28px]`}
+            >
+              {currentChancePct}%
             </span>
-          )}
-        </div>
-      </div>
-
-      <div className="relative mb-3">
-        <MercyProgressBar
-          mercyThreshold={mercyThreshold}
-          guaranteedAt={guaranteedAt}
-          preMercyProgress={preMercyProgress}
-          mercyProgress={mercyProgress}
-          fillClass={meta.fillClass}
-          neonBgClass={meta.neonBgClass}
-          neonGlowClass={meta.neonGlowClass}
-        />
-        <div className="mt-1 flex items-center justify-between text-[11px] tabular-nums">
-          <span className={isExtraLegendaryEvent ? EXTRA_LEGENDARY_TEXT_CLASS : 'text-amber-400'}>
-            {data.activeEvent
-              ? formatEventCountdown(data.activeEvent.endAt, isExtraLegendaryEvent ? 'Extra Legendary event' : '2x event')
-              : ''}
-          </span>
-          <span className="font-mono text-slate-500">
-            <span className="text-slate-400">{caption.primary}</span> · {caption.secondary}
-          </span>
-        </div>
-      </div>
-
-      {legendary && legendaryProgress && legendaryCaption && (
-        <div className="relative mb-3 border-t border-slate-800 pt-3">
-          <span className="font-mono text-lg font-bold tabular-nums text-amber-400">{(legendary.currentChance * 100).toFixed(1)}%</span>
-          <div className="mt-1 mb-1.5 flex items-center justify-between">
-            <span className="text-[11px] text-slate-500">{legendaryProgress.mercyActive ? 'mercy aktivní' : 'mimo mercy'}</span>
-            <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-bold tracking-wide text-amber-400 uppercase">
-              Legendary
-            </span>
+          </div>
+          <div className="mb-1 flex items-center justify-between">
+            <p className="text-[11px] text-slate-500">{mercyActive ? 'mercy aktivní' : 'mimo mercy'}</p>
+            {legendary && (
+              <span className="rounded-full bg-[#A30000]/20 px-2 py-0.5 text-[10px] font-bold tracking-wide text-[#E05B5B] uppercase">
+                Mythical
+              </span>
+            )}
           </div>
           <MercyProgressBar
-            mercyThreshold={legendaryProgress.mercyThreshold}
-            guaranteedAt={legendaryProgress.guaranteedAt}
-            preMercyProgress={legendaryProgress.preMercyProgress}
-            mercyProgress={legendaryProgress.mercyProgress}
-            fillClass="bg-amber-500"
-            neonBgClass="bg-amber-400"
-            neonGlowClass="shadow-[0_0_10px_2px_rgba(251,191,36,0.8)]"
+            mercyThreshold={mercyThreshold}
+            guaranteedAt={guaranteedAt}
+            preMercyProgress={preMercyProgress}
+            mercyProgress={mercyProgress}
+            fillClass={meta.fillClass}
+            neonBgClass={meta.neonBgClass}
+            neonGlowClass={meta.neonGlowClass}
           />
-          <div className="font-mono mt-1 text-right text-[11px] tabular-nums text-slate-500">
-            <span className="text-slate-400">{legendaryCaption.primary}</span> · {legendaryCaption.secondary}
+          <div className="mt-1 flex items-center justify-between text-[11px] tabular-nums">
+            <span className={isExtraLegendaryEvent ? EXTRA_LEGENDARY_TEXT_CLASS : 'text-amber-400'}>
+              {data.activeEvent
+                ? formatEventCountdown(data.activeEvent.endAt, isExtraLegendaryEvent ? 'Extra Legendary event' : '2x event')
+                : ''}
+            </span>
+            <span className="font-mono text-slate-500">
+              <span className="text-slate-400">{caption.primary}</span> · {caption.secondary}
+            </span>
           </div>
         </div>
-      )}
+
+        {legendary && legendaryProgress && legendaryCaption && (
+          <div className="relative mb-3 border-t border-slate-800 pt-3 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-8">
+            <p className="mb-0.5 text-[10.5px] font-semibold tracking-[0.1em] text-slate-500 uppercase">Aktuální šance</p>
+            <span className="font-mono text-lg font-bold tabular-nums text-amber-400">
+              {(legendary.currentChance * 100).toFixed(1)}%
+            </span>
+            <div className="mt-1 mb-1 flex items-center justify-between">
+              <span className="text-[11px] text-slate-500">{legendaryProgress.mercyActive ? 'mercy aktivní' : 'mimo mercy'}</span>
+              <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-bold tracking-wide text-amber-400 uppercase">
+                Legendary
+              </span>
+            </div>
+            <MercyProgressBar
+              mercyThreshold={legendaryProgress.mercyThreshold}
+              guaranteedAt={legendaryProgress.guaranteedAt}
+              preMercyProgress={legendaryProgress.preMercyProgress}
+              mercyProgress={legendaryProgress.mercyProgress}
+              fillClass="bg-amber-500"
+              neonBgClass="bg-amber-400"
+              neonGlowClass="shadow-[0_0_10px_2px_rgba(251,191,36,0.8)]"
+            />
+            <div className="font-mono mt-1 text-right text-[11px] tabular-nums text-slate-500">
+              <span className="text-slate-400">{legendaryCaption.primary}</span> · {legendaryCaption.secondary}
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="relative flex items-start gap-2">
         <div className="min-w-0 flex-1">
