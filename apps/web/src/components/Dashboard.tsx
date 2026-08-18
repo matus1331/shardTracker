@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ShardType } from '@rsl/mercy-calc';
 import { useAuth } from '../auth/AuthContext';
 import { useShardData } from '../hooks/useShardData';
 import { ShardCard } from './ShardCard';
@@ -26,6 +27,11 @@ function HistoryIcon() {
 interface DashboardProps {
   onOpenHistory: () => void;
 }
+
+/** Display order only (not SHARD_TYPES — that stays canonical for seeding/API/filters
+ * elsewhere): classic shards first, Primal's dual-track card gets its own full-width row,
+ * Remnant (a "summon", not a shard) is set apart at the very end. */
+const DASHBOARD_ORDER: ShardType[] = ['ANCIENT', 'VOID', 'SACRED', 'PRIMAL', 'REMNANT'];
 
 export function Dashboard({ onOpenHistory }: DashboardProps) {
   const { shards, error, logShards, correctCount, confirmDrop } = useShardData();
@@ -74,16 +80,40 @@ export function Dashboard({ onOpenHistory }: DashboardProps) {
 
       {shards && (
         <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] sm:gap-4">
-          {/* Primal carries two mercy tracks and is taller than every other card — sorting it
-              last and giving it the full row width (instead of squeezing it into a shared row)
-              avoids the row-height mismatch that stretched/gapped its neighbors. */}
+          {/* Ancient/Void/Sacred are the classic single-track shards and share the regular
+              grid. Primal carries two mercy tracks and is taller than the rest, so it gets its
+              own full-width row (avoids the row-height mismatch that stretched/gapped
+              neighbors). Remnant is a "summon", not a shard — kept apart at the end, centered,
+              rather than folded back into the shard grid. */}
           {[...shards]
-            .sort((a, b) => (a.shardType === 'PRIMAL' ? 1 : b.shardType === 'PRIMAL' ? -1 : 0))
-            .map((shard) => (
-              <div key={shard.shardType} className={shard.shardType === 'PRIMAL' ? 'sm:col-span-full' : undefined}>
-                <ShardCard data={shard} onLog={logShards} onCorrect={correctCount} onConfirmDrop={confirmDrop} />
-              </div>
-            ))}
+            .sort((a, b) => DASHBOARD_ORDER.indexOf(a.shardType) - DASHBOARD_ORDER.indexOf(b.shardType))
+            .map((shard) => {
+              if (shard.shardType === 'PRIMAL') {
+                return (
+                  <div key={shard.shardType} className="sm:col-span-full">
+                    <ShardCard data={shard} onLog={logShards} onCorrect={correctCount} onConfirmDrop={confirmDrop} />
+                  </div>
+                );
+              }
+              if (shard.shardType === 'REMNANT') {
+                return (
+                  <div key={shard.shardType} className="sm:col-span-full sm:flex sm:justify-center">
+                    <div className="w-full sm:max-w-xs">
+                      <ShardCard data={shard} onLog={logShards} onCorrect={correctCount} onConfirmDrop={confirmDrop} />
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <ShardCard
+                  key={shard.shardType}
+                  data={shard}
+                  onLog={logShards}
+                  onCorrect={correctCount}
+                  onConfirmDrop={confirmDrop}
+                />
+              );
+            })}
         </div>
       )}
 
