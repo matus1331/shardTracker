@@ -23,6 +23,7 @@ function DropRow({ drop }: { drop: DropRecord }) {
   const meta = SHARD_META[drop.shardType];
   const dropLabel = drop.rarity ? drop.rarity.toLowerCase() : meta.dropLabel;
   const pillClass = drop.rarity === 'LEGENDARY' ? 'bg-amber-400/15 text-amber-400' : meta.pillClass;
+  const genericChampionLabel = drop.rarity === 'LEGENDARY' ? 'Legendární šampion' : meta.genericChampionLabel;
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 rounded-lg border border-slate-800 bg-slate-900 px-3.5 py-2.5">
@@ -64,7 +65,7 @@ function DropRow({ drop }: { drop: DropRecord }) {
             </a>
           ) : (
             <span className={drop.championName ? 'text-slate-300' : 'text-slate-500 italic'}>
-              {drop.championName || meta.genericChampionLabel}
+              {drop.championName || genericChampionLabel}
             </span>
           )}
           {drop.extraChampionName &&
