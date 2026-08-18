@@ -21,14 +21,16 @@ function ExternalLinkIcon() {
 
 function DropRow({ drop }: { drop: DropRecord }) {
   const meta = SHARD_META[drop.shardType];
+  const dropLabel = drop.rarity ? drop.rarity.toLowerCase() : meta.dropLabel;
+  const pillClass = drop.rarity === 'LEGENDARY' ? 'bg-amber-400/15 text-amber-400' : meta.pillClass;
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 rounded-lg border border-slate-800 bg-slate-900 px-3.5 py-2.5">
       <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
         <span className={`inline-block h-2 w-2 shrink-0 rounded-full ${meta.dotClass}`} />
         <span className="text-[13px] font-semibold whitespace-nowrap">{meta.label}</span>
-        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase ${meta.pillClass}`}>
-          {meta.dropLabel}
+        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase ${pillClass}`}>
+          {dropLabel}
         </span>
         <span className="text-xs text-slate-400 tabular-nums">{drop.seriesNumber}. shard v sérii</span>
         <span
