@@ -73,7 +73,7 @@ export function Dashboard({ onOpenHistory }: DashboardProps) {
       {!shards && !error && <p className="text-sm text-slate-400">Načítání…</p>}
 
       {shards && (
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] sm:gap-4">
           {shards.map((shard) => (
             <ShardCard
               key={shard.shardType}
