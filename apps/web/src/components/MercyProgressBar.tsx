@@ -21,19 +21,20 @@ export function MercyProgressBar({
   const mercyWidthPct = 100 - preWidthPct;
 
   return (
-    <div className="flex h-2 gap-1 py-1">
-      <div className="h-2 overflow-hidden rounded-l-full bg-slate-800" style={{ width: `${preWidthPct}%` }}>
+    <div className="relative flex h-2.5 gap-0.5 py-1">
+      <div className="h-2.5 overflow-hidden rounded-l-full bg-slate-800/80" style={{ width: `${preWidthPct}%` }}>
         <div
-          className={`h-full rounded-l-full transition-all ${fillClass}`}
+          className={`h-full rounded-l-full transition-all duration-700 ease-out ${fillClass}`}
           style={{ width: `${preMercyProgress * 100}%` }}
         />
       </div>
-      <div className="h-2 rounded-r-full bg-slate-800" style={{ width: `${mercyWidthPct}%` }}>
+      <div className="relative h-2.5 rounded-r-full bg-slate-800/80" style={{ width: `${mercyWidthPct}%` }}>
         <div
-          className={`h-full rounded-r-full transition-all ${neonBgClass} ${mercyProgress > 0 ? neonGlowClass : ''}`}
+          className={`h-full rounded-r-full transition-all duration-700 ease-out ${neonBgClass} ${mercyProgress > 0 ? neonGlowClass : ''}`}
           style={{ width: `${mercyProgress * 100}%` }}
         />
       </div>
+      <div className="absolute top-0 bottom-0 w-px bg-white/25" style={{ left: `${preWidthPct}%` }} aria-hidden="true" />
     </div>
   );
 }
