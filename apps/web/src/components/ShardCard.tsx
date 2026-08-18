@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import type { ShardType } from '@rsl/mercy-calc';
-import { getMercyProgress, MERCY_CONFIGS } from '@rsl/mercy-calc';
+import { getMercyProgress, getMercyProgressForConfig, MERCY_CONFIGS, PRIMAL_LEGENDARY_MERCY_CONFIG } from '@rsl/mercy-calc';
 import type { ShardCounterState } from '../types';
 import { SHARD_META } from '../types';
 import { MercyProgressBar } from './MercyProgressBar';
 import { LogShardsForm } from './LogShardsForm';
 import { EditCountModal } from './EditCountModal';
 import { DropCelebrationModal } from './DropCelebrationModal';
+import { ShardIcon } from './ShardIcons';
 import { formatEventCountdown } from '../utils/formatEventCountdown';
 import {
   EXTRA_LEGENDARY_BADGE_CLASS,
@@ -18,8 +19,13 @@ import {
 interface ShardCardProps {
   data: ShardCounterState;
   onLog: (shardType: ShardType, amount: number, gotDrop: boolean) => Promise<void>;
-  onCorrect: (shardType: ShardType, value: number, gotDrop: boolean) => Promise<void>;
-  onConfirmDrop: (shardType: ShardType, championName: string, extraChampionName?: string) => Promise<void>;
+  onCorrect: (shardType: ShardType, value: number, gotDrop: boolean, rarity?: 'LEGENDARY' | 'MYTHICAL') => Promise<void>;
+  onConfirmDrop: (
+    shardType: ShardType,
+    championName: string,
+    extraChampionName?: string,
+    rarity?: 'LEGENDARY' | 'MYTHICAL',
+  ) => Promise<void>;
 }
 
 function PencilIcon() {
@@ -42,6 +48,20 @@ function DropIcon() {
   );
 }
 
+/** Left side always answers "how many have I opened" — that figure must never
+ * disappear once mercy activates. Right side always answers "how many until
+ * the next milestone" (mercy or the guarantee). */
+function mercyCaption(sinceLastDrop: number, mercyThreshold: number, guaranteedAt: number, mercyActive: boolean) {
+  const primary = `${sinceLastDrop} otevřených`;
+  if (mercyActive) {
+    const remaining = Math.max(guaranteedAt - sinceLastDrop, 0);
+    const secondary = remaining === 0 ? 'garantovaný drop' : `ještě ${remaining} do garance`;
+    return { primary, secondary };
+  }
+  const remaining = mercyThreshold - sinceLastDrop;
+  return { primary, secondary: `ještě ${remaining} do mercy` };
+}
+
 export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardProps) {
   const [editing, setEditing] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
@@ -54,39 +74,43 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
     { multiplier: isMultiplierEvent ? data.activeEvent!.multiplier : 1 },
   );
 
-  const progressCaption = mercyActive
-    ? `${data.sinceLastDrop - mercyThreshold} / ${guaranteedAt - mercyThreshold} do garance`
-    : `${data.sinceLastDrop} / ${mercyThreshold} do mercy`;
+  const caption = mercyCaption(data.sinceLastDrop, mercyThreshold, guaranteedAt, mercyActive);
+
+  const legendary = data.legendaryTrack;
+  const legendaryProgress = legendary ? getMercyProgressForConfig(PRIMAL_LEGENDARY_MERCY_CONFIG, legendary.sinceLastDrop) : null;
+  const legendaryCaption = legendary
+    ? mercyCaption(
+        legendary.sinceLastDrop,
+        PRIMAL_LEGENDARY_MERCY_CONFIG.mercyThreshold,
+        legendaryProgress!.guaranteedAt,
+        legendaryProgress!.mercyActive,
+      )
+    : null;
 
   const baseChancePct = (MERCY_CONFIGS[data.shardType].baseChance * 100).toFixed(1);
   const currentChancePct = (data.currentChance * 100).toFixed(1);
 
   return (
     <div
-      className={`rounded-xl bg-slate-900 p-4 ${
+      className={`rounded-xl bg-slate-900 p-3 sm:p-4 ${
         isExtraLegendaryEvent
-          ? `border-2 ${EXTRA_LEGENDARY_CARD_ACCENT_CLASS}`
+          ? `border-2 ${EXTRA_LEGENDARY_CARD_ACCENT_CLASS} animate-[pulse_2.4s_ease-in-out_infinite] motion-reduce:animate-none`
           : isMultiplierEvent
-            ? `border-2 ${meta.eventAccentClass}`
+            ? `border-2 ${meta.eventAccentClass} animate-[pulse_2.4s_ease-in-out_infinite] motion-reduce:animate-none`
             : `border border-slate-800 border-l-[3px] ${meta.borderClass}`
       }`}
     >
-      <div className="mb-2 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-[13px] font-semibold">
-          <span className={`inline-block h-2 w-2 shrink-0 rounded-full ${meta.dotClass}`} />
-          <span>{meta.label}</span>
+      <div className="mb-2 flex items-center gap-2 sm:mb-3 sm:gap-2.5">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-950/60 ring-1 ring-slate-800 sm:h-11 sm:w-11 sm:rounded-xl">
+          <ShardIcon shardType={data.shardType} className="h-6 w-6 sm:h-7 sm:w-7" />
         </div>
-        <div className="flex items-center gap-1.5">
-          {isMultiplierEvent && (
-            <span className="animate-pulse rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 px-2 py-0.5 text-[10px] font-bold tracking-wide text-slate-900 shadow-[0_0_8px_1px_rgba(251,191,36,0.6)] motion-reduce:animate-none">
-              ⚡ 2×
-            </span>
-          )}
-          {isExtraLegendaryEvent && <span className={EXTRA_LEGENDARY_BADGE_CLASS}>{EXTRA_LEGENDARY_BADGE_LABEL}</span>}
-          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase ${meta.pillClass}`}>
-            {meta.dropLabel}
+        <span className="flex-1 text-[13px] font-semibold">{meta.label}</span>
+        {isMultiplierEvent && (
+          <span className="animate-[pulse_2.4s_ease-in-out_infinite] rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 px-2 py-0.5 text-[10px] font-bold tracking-wide text-slate-900 shadow-[0_0_8px_1px_rgba(251,191,36,0.6)] motion-reduce:animate-none">
+            ⚡ 2×
           </span>
-        </div>
+        )}
+        {isExtraLegendaryEvent && <span className={EXTRA_LEGENDARY_BADGE_CLASS}>{EXTRA_LEGENDARY_BADGE_LABEL}</span>}
       </div>
 
       <div className="mb-1.5 flex items-baseline gap-1.5">
@@ -96,7 +120,7 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
             <span className="text-sm text-slate-500">→</span>
           </>
         )}
-        <span className="text-2xl font-bold tabular-nums">{currentChancePct}%</span>
+        <span className="text-xl font-bold tabular-nums sm:text-2xl">{currentChancePct}%</span>
         <span className="text-[11px] whitespace-nowrap text-slate-500">
           {mercyActive ? 'mercy aktivní' : 'aktuální šance'}
         </span>
@@ -118,9 +142,34 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
               ? formatEventCountdown(data.activeEvent.endAt, isExtraLegendaryEvent ? 'Extra Legendary event' : '2x event')
               : ''}
           </span>
-          <span className="text-slate-500">{progressCaption}</span>
+          <span className="text-slate-500">
+            <span className="text-slate-400">{caption.primary}</span> · {caption.secondary}
+          </span>
         </div>
       </div>
+
+      {legendary && legendaryProgress && legendaryCaption && (
+        <div className="mb-3 border-t border-slate-800 pt-3">
+          <div className="mb-1.5 flex items-baseline gap-1.5">
+            <span className="text-lg font-bold tabular-nums text-amber-400">{(legendary.currentChance * 100).toFixed(1)}%</span>
+            <span className="text-[11px] whitespace-nowrap text-slate-500">
+              legendary · {legendaryProgress.mercyActive ? 'mercy aktivní' : 'mimo mercy'}
+            </span>
+          </div>
+          <MercyProgressBar
+            mercyThreshold={legendaryProgress.mercyThreshold}
+            guaranteedAt={legendaryProgress.guaranteedAt}
+            preMercyProgress={legendaryProgress.preMercyProgress}
+            mercyProgress={legendaryProgress.mercyProgress}
+            fillClass="bg-amber-500"
+            neonBgClass="bg-amber-400"
+            neonGlowClass="shadow-[0_0_10px_2px_rgba(251,191,36,0.8)]"
+          />
+          <div className="mt-1 text-[11px] tabular-nums text-slate-500">
+            <span className="text-slate-400">{legendaryCaption.primary}</span> · {legendaryCaption.secondary}
+          </div>
+        </div>
+      )}
 
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
@@ -151,6 +200,7 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
           shardType={data.shardType}
           currentValue={data.sinceLastDrop}
           dropFlagLabel={meta.dropFlagLabel}
+          legendaryValue={data.legendaryTrack?.sinceLastDrop}
           onClose={() => setEditing(false)}
           onSubmit={onCorrect}
         />
@@ -161,9 +211,10 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
           title={meta.celebrationTitle}
           shardType={data.shardType}
           extraLegendaryActive={isExtraLegendaryEvent}
+          dualRarity={data.shardType === 'PRIMAL'}
           onCancel={() => setCelebrating(false)}
-          onConfirm={async (championName, extraChampionName) => {
-            await onConfirmDrop(data.shardType, championName, extraChampionName || undefined);
+          onConfirm={async (championName, extraChampionName, rarity) => {
+            await onConfirmDrop(data.shardType, championName, extraChampionName || undefined, rarity);
             setCelebrating(false);
           }}
         />

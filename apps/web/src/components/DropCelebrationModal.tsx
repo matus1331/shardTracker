@@ -8,7 +8,9 @@ interface DropCelebrationModalProps {
   title: string;
   shardType: ShardType;
   extraLegendaryActive: boolean;
-  onConfirm: (championName: string, extraChampionName: string) => Promise<void>;
+  /** True only for Primal — shows a Mythical/Legendary picker before the champion field. */
+  dualRarity: boolean;
+  onConfirm: (championName: string, extraChampionName: string, rarity?: 'LEGENDARY' | 'MYTHICAL') => Promise<void>;
   onCancel: () => void;
 }
 
@@ -16,9 +18,11 @@ export function DropCelebrationModal({
   title,
   shardType,
   extraLegendaryActive,
+  dualRarity,
   onConfirm,
   onCancel,
 }: DropCelebrationModalProps) {
+  const [rarity, setRarity] = useState<'LEGENDARY' | 'MYTHICAL'>('MYTHICAL');
   const [championName, setChampionName] = useState('');
   const [extraChampionName, setExtraChampionName] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -28,10 +32,10 @@ export function DropCelebrationModal({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchChampionSuggestions(shardType)
+    fetchChampionSuggestions(shardType, dualRarity ? rarity : undefined)
       .then(setSuggestions)
       .catch(() => {});
-  }, [shardType]);
+  }, [shardType, dualRarity, rarity]);
 
   useEffect(() => {
     if (!extraLegendaryActive) {
@@ -40,11 +44,19 @@ export function DropCelebrationModal({
     }
   }, [extraLegendaryActive]);
 
+  useEffect(() => {
+    if (dualRarity) {
+      setChampionName('');
+      setPrimaryUnknown(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rarity]);
+
   const handleConfirm = async () => {
     setSubmitting(true);
     setError(null);
     try {
-      await onConfirm(championName.trim(), extraChampionName.trim());
+      await onConfirm(championName.trim(), extraChampionName.trim(), dualRarity ? rarity : undefined);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Reset se nezdařil');
       setSubmitting(false);
@@ -62,6 +74,30 @@ export function DropCelebrationModal({
         <p className="mb-4 text-sm text-slate-400">
           Chceš teď vynulovat svůj Shard Tracker a začít počítat Mercy counter od nuly?
         </p>
+        {dualRarity && (
+          <div className="mb-3 flex rounded-lg border border-slate-700 bg-slate-800 p-1 text-xs font-medium">
+            <button
+              type="button"
+              onClick={() => setRarity('MYTHICAL')}
+              disabled={submitting}
+              className={`flex-1 rounded-md py-1.5 transition-colors ${
+                rarity === 'MYTHICAL' ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Mythical
+            </button>
+            <button
+              type="button"
+              onClick={() => setRarity('LEGENDARY')}
+              disabled={submitting}
+              className={`flex-1 rounded-md py-1.5 transition-colors ${
+                rarity === 'LEGENDARY' ? 'bg-amber-400 text-slate-900' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Legendary
+            </button>
+          </div>
+        )}
         <ChampionAutocompleteField
           label="Jméno šampiona (nepovinné)"
           suggestions={suggestions}
