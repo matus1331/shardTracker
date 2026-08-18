@@ -59,3 +59,8 @@ if (!shardBatchesColumnNames.has('extra_champion_id')) {
   const migrationSql = readFileSync(join(__dirname, 'migrations', '007_extra_champion.sql'), 'utf-8');
   await client.executeMultiple(migrationSql);
 }
+
+if (!shardBatchesColumnNames.has('rarity')) {
+  const migrationSql = readFileSync(join(__dirname, 'migrations', '008_primal_legendary_mercy.sql'), 'utf-8');
+  await client.executeMultiple(migrationSql);
+}
