@@ -28,6 +28,8 @@ export default defineConfig({
         ],
       },
       workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
         globIgnores: ['pwa-icon.png'],
         runtimeCaching: [
