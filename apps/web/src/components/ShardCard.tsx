@@ -108,12 +108,21 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
           <ShardIcon shardType={data.shardType} className="relative h-7 w-7" />
         </div>
         <span className="font-display flex-1 text-[14px] font-semibold">{meta.label}</span>
-        {isMultiplierEvent && (
-          <span className="animate-[pulse_2.4s_ease-in-out_infinite] rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 px-2 py-0.5 text-[10px] font-bold tracking-wide text-slate-900 shadow-[0_0_8px_1px_rgba(251,191,36,0.6)] motion-reduce:animate-none">
-            ⚡ 2×
-          </span>
+        {data.activeEvent && (
+          <div className="flex flex-col items-end gap-1">
+            {isMultiplierEvent && (
+              <span className="animate-[pulse_2.4s_ease-in-out_infinite] rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 px-2 py-0.5 text-[10px] font-bold tracking-wide text-slate-900 shadow-[0_0_8px_1px_rgba(251,191,36,0.6)] motion-reduce:animate-none">
+                ⚡ 2×
+              </span>
+            )}
+            {isExtraLegendaryEvent && <span className={EXTRA_LEGENDARY_BADGE_CLASS}>{EXTRA_LEGENDARY_BADGE_LABEL}</span>}
+            <span
+              className={`font-mono text-[10px] whitespace-nowrap tabular-nums ${isExtraLegendaryEvent ? EXTRA_LEGENDARY_TEXT_CLASS : 'text-amber-400'}`}
+            >
+              {formatEventCountdown(data.activeEvent.endAt, isExtraLegendaryEvent ? 'Extra Legendary event' : '2x event')}
+            </span>
+          </div>
         )}
-        {isExtraLegendaryEvent && <span className={EXTRA_LEGENDARY_BADGE_CLASS}>{EXTRA_LEGENDARY_BADGE_LABEL}</span>}
       </div>
 
       <div className={legendary ? 'sm:grid sm:grid-cols-2 sm:gap-x-8' : undefined}>
@@ -149,15 +158,8 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
             neonBgClass={meta.neonBgClass}
             neonGlowClass={meta.neonGlowClass}
           />
-          <div className="mt-1 flex items-center justify-between text-[11px] tabular-nums">
-            <span className={isExtraLegendaryEvent ? EXTRA_LEGENDARY_TEXT_CLASS : 'text-amber-400'}>
-              {data.activeEvent
-                ? formatEventCountdown(data.activeEvent.endAt, isExtraLegendaryEvent ? 'Extra Legendary event' : '2x event')
-                : ''}
-            </span>
-            <span className="font-mono text-slate-500">
-              <span className="text-slate-400">{caption.primary}</span> · {caption.secondary}
-            </span>
+          <div className="font-mono mt-1 text-right text-[11px] tabular-nums text-slate-500">
+            <span className="text-slate-400">{caption.primary}</span> · {caption.secondary}
           </div>
         </div>
 
