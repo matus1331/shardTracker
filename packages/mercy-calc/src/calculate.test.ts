@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { calculateDropChance, getGuaranteedAt, getMercyProgress } from './calculate.js';
+import {
+  calculateDropChance,
+  calculateDropChanceForConfig,
+  getGuaranteedAt,
+  getGuaranteedAtForConfig,
+  getMercyProgress,
+  getMercyProgressForConfig,
+  PRIMAL_LEGENDARY_MERCY_CONFIG,
+} from './calculate.js';
 
 describe('calculateDropChance', () => {
   it('returns base chance at 0 opened', () => {
@@ -94,5 +102,44 @@ describe('multiplier option (2x event support)', () => {
     expect(progress.guaranteedAt).toBe(56);
     expect(progress.mercyActive).toBe(true);
     expect(progress.mercyProgress).toBe(1);
+  });
+});
+
+describe('PRIMAL_LEGENDARY_MERCY_CONFIG (secondary mercy track for Primal)', () => {
+  it('stays at 1% base chance up to and including the 75-shard threshold', () => {
+    expect(calculateDropChanceForConfig(PRIMAL_LEGENDARY_MERCY_CONFIG, 0)).toBeCloseTo(0.01);
+    expect(calculateDropChanceForConfig(PRIMAL_LEGENDARY_MERCY_CONFIG, 74)).toBeCloseTo(0.01);
+    expect(calculateDropChanceForConfig(PRIMAL_LEGENDARY_MERCY_CONFIG, 75)).toBeCloseTo(0.01);
+  });
+
+  it('adds 1% per shard past the threshold', () => {
+    expect(calculateDropChanceForConfig(PRIMAL_LEGENDARY_MERCY_CONFIG, 76)).toBeCloseTo(0.02);
+    expect(calculateDropChanceForConfig(PRIMAL_LEGENDARY_MERCY_CONFIG, 82)).toBeCloseTo(0.08);
+  });
+
+  it('is guaranteed at shard 174 and caps at 100%', () => {
+    expect(getGuaranteedAtForConfig(PRIMAL_LEGENDARY_MERCY_CONFIG)).toBe(174);
+    expect(calculateDropChanceForConfig(PRIMAL_LEGENDARY_MERCY_CONFIG, 174)).toBe(1.0);
+    expect(calculateDropChanceForConfig(PRIMAL_LEGENDARY_MERCY_CONFIG, 100000)).toBe(1.0);
+  });
+
+  it("getMercyProgressForConfig tracks the secondary track independently of the primary one", () => {
+    const progress = getMercyProgressForConfig(PRIMAL_LEGENDARY_MERCY_CONFIG, 82);
+    expect(progress.mercyActive).toBe(true);
+    expect(progress.mercyThreshold).toBe(75);
+    expect(progress.guaranteedAt).toBe(174);
+    expect(progress.mercyProgress).toBeCloseTo(7 / 99);
+  });
+
+  it("rarity is LEGENDARY, distinguishing it from Primal's own MYTHICAL config", () => {
+    expect(PRIMAL_LEGENDARY_MERCY_CONFIG.rarity).toBe('LEGENDARY');
+  });
+});
+
+describe('shardType-based wrappers still match pre-refactor behavior', () => {
+  it('calculateDropChance/getGuaranteedAt/getMercyProgress are unchanged for every shard type', () => {
+    expect(calculateDropChance('PRIMAL', 209)).toBeCloseTo(0.905);
+    expect(getGuaranteedAt('SACRED')).toBe(59);
+    expect(getMercyProgress('VOID', 209).mercyActive).toBe(true);
   });
 });

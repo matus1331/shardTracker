@@ -1,11 +1,12 @@
 import type { FastifyInstance } from 'fastify';
-import { calculateDropChance, SHARD_TYPES, type ShardType } from '@rsl/mercy-calc';
+import { calculateDropChance, calculateDropChanceForConfig, PRIMAL_LEGENDARY_MERCY_CONFIG, SHARD_TYPES, type ShardType } from '@rsl/mercy-calc';
 import {
   addShards,
   correctSinceLastDrop,
   getActiveMercyEvents,
   getAllCounters,
   isChampionInShardPool,
+  isChampionOfRarity,
   type MercyEventRow,
   type ShardCounterRow,
 } from '../repository.js';
@@ -22,6 +23,12 @@ function withChance(row: ShardCounterRow, activeEvents: Map<ShardType, MercyEven
     currentChance: calculateDropChance(row.shardType, row.sinceLastDrop, { multiplier }),
     activeEvent: activeEvent
       ? { multiplier: activeEvent.multiplier, endAt: activeEvent.endAt, label: activeEvent.label, kind: activeEvent.kind }
+      : null,
+    legendaryTrack: row.legendaryTrack
+      ? {
+          ...row.legendaryTrack,
+          currentChance: calculateDropChanceForConfig(PRIMAL_LEGENDARY_MERCY_CONFIG, row.legendaryTrack.sinceLastDrop, { multiplier }),
+        }
       : null,
   };
 }
@@ -60,10 +67,10 @@ export async function shardRoutes(app: FastifyInstance) {
 
   app.put<{
     Params: { shardType: string };
-    Body: { value?: number; gotDrop?: boolean; championName?: string; extraChampionName?: string };
+    Body: { value?: number; gotDrop?: boolean; championName?: string; extraChampionName?: string; rarity?: string };
   }>('/api/shards/:shardType/since-last-drop', async (request, reply) => {
     const { shardType } = request.params;
-    const { value, gotDrop = false, championName, extraChampionName } = request.body ?? {};
+    const { value, gotDrop = false, championName, extraChampionName, rarity } = request.body ?? {};
 
     if (!isShardType(shardType)) {
       return reply.code(400).send({ error: 'Invalid shardType' });
@@ -72,9 +79,25 @@ export async function shardRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: 'value must be an integer >= 0' });
     }
 
+    let trimmedRarity: 'LEGENDARY' | 'MYTHICAL' | undefined;
+    if (rarity === 'LEGENDARY' || rarity === 'MYTHICAL') {
+      trimmedRarity = rarity;
+    } else if (rarity) {
+      return reply.code(400).send({ error: 'Invalid rarity' });
+    }
+    if (trimmedRarity === 'LEGENDARY' && shardType !== 'PRIMAL') {
+      return reply.code(400).send({ error: 'rarity is only applicable to PRIMAL' });
+    }
+
     const trimmedChampionName = championName?.trim().slice(0, 80) || null;
-    if (trimmedChampionName && !(await isChampionInShardPool(shardType, trimmedChampionName))) {
-      return reply.code(400).send({ error: 'Invalid championName for this shard type' });
+    if (trimmedChampionName) {
+      const isValid =
+        shardType === 'PRIMAL' && trimmedRarity
+          ? await isChampionOfRarity(trimmedChampionName, trimmedRarity)
+          : await isChampionInShardPool(shardType, trimmedChampionName);
+      if (!isValid) {
+        return reply.code(400).send({ error: 'Invalid championName for this shard type' });
+      }
     }
 
     const activeEvents = await getActiveMercyEvents([shardType]);
@@ -99,6 +122,7 @@ export async function shardRoutes(app: FastifyInstance) {
       gotDrop,
       trimmedChampionName,
       trimmedExtraChampionName,
+      trimmedRarity,
     );
     return withChance(updated, activeEvents);
   });

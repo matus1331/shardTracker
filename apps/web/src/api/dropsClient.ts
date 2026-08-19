@@ -13,8 +13,9 @@ export function fetchDrops(): Promise<DropRecord[]> {
   return fetch('/api/drops', { credentials: 'include' }).then((res) => handleDropsResponse<DropRecord[]>(res));
 }
 
-export function fetchChampionSuggestions(shardType: ShardType): Promise<string[]> {
-  return fetch(`/api/champions/${shardType}`, { credentials: 'include' }).then((res) =>
+export function fetchChampionSuggestions(shardType: ShardType, rarity?: 'LEGENDARY' | 'MYTHICAL'): Promise<string[]> {
+  const query = rarity ? `?rarity=${rarity}` : '';
+  return fetch(`/api/champions/${shardType}${query}`, { credentials: 'include' }).then((res) =>
     handleDropsResponse<string[]>(res),
   );
 }

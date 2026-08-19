@@ -23,21 +23,20 @@ export function useShardData() {
     setShards((prev) => prev?.map((s) => (s.shardType === shardType ? updated : s)) ?? prev);
   }, []);
 
-  const correctCount = useCallback(async (shardType: ShardType, value: number, gotDrop: boolean) => {
-    const updated = await correctSinceLastDrop(shardType, value, gotDrop);
-    setShards((prev) => prev?.map((s) => (s.shardType === shardType ? updated : s)) ?? prev);
-  }, []);
+  const correctCount = useCallback(
+    async (shardType: ShardType, value: number, gotDrop: boolean, rarity?: 'LEGENDARY' | 'MYTHICAL') => {
+      const updated = await correctSinceLastDrop(shardType, value, gotDrop, undefined, undefined, rarity);
+      setShards((prev) => prev?.map((s) => (s.shardType === shardType ? updated : s)) ?? prev);
+    },
+    [],
+  );
 
   const confirmDrop = useCallback(
-    async (shardType: ShardType, championName: string, extraChampionName?: string) => {
+    async (shardType: ShardType, championName: string, extraChampionName?: string, rarity?: 'LEGENDARY' | 'MYTHICAL') => {
       const current = shards?.find((s) => s.shardType === shardType);
-      const updated = await correctSinceLastDrop(
-        shardType,
-        current?.sinceLastDrop ?? 0,
-        true,
-        championName,
-        extraChampionName,
-      );
+      const targetsLegendary = shardType === 'PRIMAL' && rarity === 'LEGENDARY';
+      const baseValue = targetsLegendary ? (current?.legendaryTrack?.sinceLastDrop ?? 0) : (current?.sinceLastDrop ?? 0);
+      const updated = await correctSinceLastDrop(shardType, baseValue, true, championName, extraChampionName, rarity);
       setShards((prev) => prev?.map((s) => (s.shardType === shardType ? updated : s)) ?? prev);
     },
     [shards],

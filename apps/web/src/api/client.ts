@@ -31,11 +31,12 @@ export function correctSinceLastDrop(
   gotDrop: boolean,
   championName?: string,
   extraChampionName?: string,
+  rarity?: 'LEGENDARY' | 'MYTHICAL',
 ): Promise<ShardCounterState> {
   return fetch(`/api/shards/${shardType}/since-last-drop`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ value, gotDrop, championName, extraChampionName }),
+    body: JSON.stringify({ value, gotDrop, championName, extraChampionName, rarity }),
   }).then(handleResponse);
 }

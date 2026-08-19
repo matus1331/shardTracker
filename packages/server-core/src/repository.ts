@@ -2,11 +2,19 @@ import { randomUUID } from 'node:crypto';
 import { SHARD_TYPES, type ShardType } from '@rsl/mercy-calc';
 import { client } from './db.js';
 
+export interface LegendaryMercyRow {
+  sinceLastDrop: number;
+  lifetimeOpened: number;
+  lifetimeDrops: number;
+}
+
 export interface ShardCounterRow {
   shardType: ShardType;
   sinceLastDrop: number;
   lifetimeOpened: number;
   lifetimeDrops: number;
+  /** Primal's independent Legendary pity track. Always null for every other shard type. */
+  legendaryTrack: LegendaryMercyRow | null;
 }
 
 interface RawCounterRow {
@@ -14,6 +22,9 @@ interface RawCounterRow {
   since_last_drop: number;
   lifetime_opened: number;
   lifetime_drops: number;
+  since_last_legendary_drop: number;
+  lifetime_legendary_opened: number;
+  lifetime_legendary_drops: number;
 }
 
 function toShardCounterRow(row: RawCounterRow): ShardCounterRow {
@@ -22,15 +33,26 @@ function toShardCounterRow(row: RawCounterRow): ShardCounterRow {
     sinceLastDrop: Number(row.since_last_drop),
     lifetimeOpened: Number(row.lifetime_opened),
     lifetimeDrops: Number(row.lifetime_drops),
+    legendaryTrack:
+      row.shard_type === 'PRIMAL'
+        ? {
+            sinceLastDrop: Number(row.since_last_legendary_drop),
+            lifetimeOpened: Number(row.lifetime_legendary_opened),
+            lifetimeDrops: Number(row.lifetime_legendary_drops),
+          }
+        : null,
   };
 }
 
-const SELECT_COUNTER_SQL = `SELECT shard_type, since_last_drop, lifetime_opened, lifetime_drops
+const COUNTER_COLUMNS = `shard_type, since_last_drop, lifetime_opened, lifetime_drops,
+                          since_last_legendary_drop, lifetime_legendary_opened, lifetime_legendary_drops`;
+
+const SELECT_COUNTER_SQL = `SELECT ${COUNTER_COLUMNS}
                              FROM shard_counters WHERE profile_id = ? AND shard_type = ?`;
 
 export async function getAllCounters(profileId: number): Promise<ShardCounterRow[]> {
   const rs = await client.execute({
-    sql: `SELECT shard_type, since_last_drop, lifetime_opened, lifetime_drops
+    sql: `SELECT ${COUNTER_COLUMNS}
           FROM shard_counters WHERE profile_id = ?`,
     args: [profileId],
   });
@@ -57,12 +79,29 @@ export async function addShards(
     const rawAfter = before.sinceLastDrop + amount;
     const after = gotDrop ? 0 : rawAfter;
 
-    await tx.execute({
-      sql: `UPDATE shard_counters
-            SET since_last_drop = ?, lifetime_opened = lifetime_opened + ?, lifetime_drops = lifetime_drops + ?, updated_at = datetime('now')
-            WHERE profile_id = ? AND shard_type = ?`,
-      args: [after, amount, gotDrop ? 1 : 0, profileId, shardType],
-    });
+    if (shardType === 'PRIMAL') {
+      // Every shard opened counts toward both pity tracks. `gotDrop` here only ever
+      // resets the Mythical track — the reachable UI path (LogShardsForm) never sets
+      // gotDrop=true on this endpoint; a Legendary/Mythical drop is confirmed through
+      // correctSinceLastDrop with an explicit `rarity` instead.
+      const legendaryBefore = before.legendaryTrack!;
+      const legendaryAfter = legendaryBefore.sinceLastDrop + amount;
+      await tx.execute({
+        sql: `UPDATE shard_counters
+              SET since_last_drop = ?, lifetime_opened = lifetime_opened + ?, lifetime_drops = lifetime_drops + ?,
+                  since_last_legendary_drop = ?, lifetime_legendary_opened = lifetime_legendary_opened + ?,
+                  updated_at = datetime('now')
+              WHERE profile_id = ? AND shard_type = ?`,
+        args: [after, amount, gotDrop ? 1 : 0, legendaryAfter, amount, profileId, shardType],
+      });
+    } else {
+      await tx.execute({
+        sql: `UPDATE shard_counters
+              SET since_last_drop = ?, lifetime_opened = lifetime_opened + ?, lifetime_drops = lifetime_drops + ?, updated_at = datetime('now')
+              WHERE profile_id = ? AND shard_type = ?`,
+        args: [after, amount, gotDrop ? 1 : 0, profileId, shardType],
+      });
+    }
 
     await tx.execute({
       sql: `INSERT INTO shard_batches
@@ -89,21 +128,38 @@ export async function correctSinceLastDrop(
   gotDrop: boolean,
   championName?: string | null,
   extraChampionName?: string | null,
+  rarity?: 'LEGENDARY' | 'MYTHICAL' | null,
 ): Promise<ShardCounterRow> {
   const tx = await client.transaction('write');
   try {
     const beforeRs = await tx.execute({ sql: SELECT_COUNTER_SQL, args: [profileId, shardType] });
     const before = toShardCounterRow(beforeRs.rows[0] as unknown as RawCounterRow);
+    const targetsLegendaryTrack = shardType === 'PRIMAL' && rarity === 'LEGENDARY';
     const after = gotDrop ? 0 : value;
-    const lifetimeDelta = value - before.sinceLastDrop;
-    const dropCount = gotDrop ? (extraChampionName ? 2 : 1) : 0;
 
-    await tx.execute({
-      sql: `UPDATE shard_counters
-            SET since_last_drop = ?, lifetime_opened = lifetime_opened + ?, lifetime_drops = lifetime_drops + ?, updated_at = datetime('now')
-            WHERE profile_id = ? AND shard_type = ?`,
-      args: [after, lifetimeDelta, dropCount, profileId, shardType],
-    });
+    let seriesBefore: number;
+    if (targetsLegendaryTrack) {
+      const legendaryBefore = before.legendaryTrack!;
+      seriesBefore = legendaryBefore.sinceLastDrop;
+      const legendaryLifetimeDelta = value - legendaryBefore.sinceLastDrop;
+      await tx.execute({
+        sql: `UPDATE shard_counters
+              SET since_last_legendary_drop = ?, lifetime_legendary_opened = lifetime_legendary_opened + ?,
+                  lifetime_legendary_drops = lifetime_legendary_drops + ?, updated_at = datetime('now')
+              WHERE profile_id = ? AND shard_type = ?`,
+        args: [after, legendaryLifetimeDelta, gotDrop ? 1 : 0, profileId, shardType],
+      });
+    } else {
+      seriesBefore = before.sinceLastDrop;
+      const lifetimeDelta = value - before.sinceLastDrop;
+      const dropCount = gotDrop ? (extraChampionName ? 2 : 1) : 0;
+      await tx.execute({
+        sql: `UPDATE shard_counters
+              SET since_last_drop = ?, lifetime_opened = lifetime_opened + ?, lifetime_drops = lifetime_drops + ?, updated_at = datetime('now')
+              WHERE profile_id = ? AND shard_type = ?`,
+        args: [after, lifetimeDelta, dropCount, profileId, shardType],
+      });
+    }
 
     // Exact, case-insensitive match (COLLATE NOCASE on champions.name) scoped to this shard
     // type's summon pool — the route layer already rejects a championName that isn't in the
@@ -132,18 +188,19 @@ export async function correctSinceLastDrop(
 
     await tx.execute({
       sql: `INSERT INTO shard_batches
-              (profile_id, shard_type, action_type, amount, got_drop, since_last_drop_before, since_last_drop_after, champion_name, champion_id, extra_champion_name, extra_champion_id)
-            VALUES (?, ?, 'CORRECTION', NULL, ?, ?, ?, ?, ?, ?, ?)`,
+              (profile_id, shard_type, action_type, amount, got_drop, since_last_drop_before, since_last_drop_after, champion_name, champion_id, extra_champion_name, extra_champion_id, rarity)
+            VALUES (?, ?, 'CORRECTION', NULL, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         profileId,
         shardType,
         gotDrop ? 1 : 0,
-        before.sinceLastDrop,
+        seriesBefore,
         after,
         championName ?? null,
         championId,
         extraChampionName ?? null,
         extraChampionId,
+        shardType === 'PRIMAL' ? (rarity ?? 'MYTHICAL') : null,
       ],
     });
 
@@ -167,6 +224,8 @@ export interface DropRow {
   extraChampionName: string | null;
   extraChampionUrl: string | null;
   eventKind: 'MULTIPLIER' | 'EXTRA_LEGENDARY' | null;
+  /** Which of Primal's two tracks this drop belongs to. Null for every other shard type. */
+  rarity: 'LEGENDARY' | 'MYTHICAL' | null;
 }
 
 interface RawDropRow {
@@ -178,6 +237,7 @@ interface RawDropRow {
   extra_champion_name: string | null;
   extra_champion_url: string | null;
   event_kind: 'MULTIPLIER' | 'EXTRA_LEGENDARY' | null;
+  rarity: 'LEGENDARY' | 'MYTHICAL' | null;
 }
 
 export async function listDrops(profileId: number): Promise<DropRow[]> {
@@ -185,6 +245,7 @@ export async function listDrops(profileId: number): Promise<DropRow[]> {
     sql: `SELECT sb.shard_type, sb.created_at, sb.since_last_drop_before,
                  sb.champion_name, c.hellhades_url AS champion_url,
                  sb.extra_champion_name, ec.hellhades_url AS extra_champion_url,
+                 sb.rarity,
                  (
                    SELECT me.kind FROM mercy_events me
                    WHERE me.shard_type = sb.shard_type
@@ -209,6 +270,7 @@ export async function listDrops(profileId: number): Promise<DropRow[]> {
     extraChampionName: row.extra_champion_name,
     extraChampionUrl: row.extra_champion_url,
     eventKind: row.event_kind,
+    rarity: row.rarity,
   }));
 }
 
@@ -222,10 +284,15 @@ export async function listDrops(profileId: number): Promise<DropRow[]> {
 function championPoolWhereClause(shardType: ShardType): string {
   if (shardType === 'VOID') return `rarity = 'LEGENDARY' AND affinity = 'Void'`;
   if (shardType === 'ANCIENT' || shardType === 'SACRED') return `rarity = 'LEGENDARY' AND (affinity IS NULL OR affinity != 'Void')`;
-  return `rarity = 'MYTHICAL'`;
+  if (shardType === 'PRIMAL') return `rarity IN ('LEGENDARY', 'MYTHICAL')`;
+  return `rarity = 'MYTHICAL'`; // REMNANT
 }
 
-export async function listChampionsForShardType(shardType: ShardType): Promise<string[]> {
+export async function listChampionsForShardType(shardType: ShardType, rarity?: 'LEGENDARY' | 'MYTHICAL'): Promise<string[]> {
+  if (shardType === 'PRIMAL' && rarity) {
+    const rs = await client.execute({ sql: `SELECT name FROM champions WHERE rarity = ? ORDER BY name`, args: [rarity] });
+    return (rs.rows as unknown as { name: string }[]).map((row) => row.name);
+  }
   const rs = await client.execute(`SELECT name FROM champions WHERE ${championPoolWhereClause(shardType)} ORDER BY name`);
   return (rs.rows as unknown as { name: string }[]).map((row) => row.name);
 }
@@ -236,6 +303,13 @@ export async function isChampionInShardPool(shardType: ShardType, name: string):
     sql: `SELECT 1 FROM champions WHERE ${championPoolWhereClause(shardType)} AND name = ? LIMIT 1`,
     args: [name],
   });
+  return rs.rows.length > 0;
+}
+
+/** Stricter check for Primal: validates a championName against exactly the chosen
+ * rarity's pool, so a Mythical name can't be confirmed under the Legendary track. */
+export async function isChampionOfRarity(name: string, rarity: 'LEGENDARY' | 'MYTHICAL'): Promise<boolean> {
+  const rs = await client.execute({ sql: `SELECT 1 FROM champions WHERE rarity = ? AND name = ? LIMIT 1`, args: [rarity, name] });
   return rs.rows.length > 0;
 }
 

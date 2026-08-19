@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { MERCY_CONFIGS, SHARD_TYPES, type ShardType } from '@rsl/mercy-calc';
+import { MERCY_CONFIGS, PRIMAL_LEGENDARY_MERCY_CONFIG, SHARD_TYPES, type ShardType } from '@rsl/mercy-calc';
 import { listChampionsForShardType, listDrops } from '../repository.js';
 
 function isShardType(value: string): value is ShardType {
@@ -15,17 +15,23 @@ export async function dropRoutes(app: FastifyInstance) {
 
   app.get('/api/drops', async (request) => {
     const drops = await listDrops(request.profileId!);
-    return drops.map((drop) => ({
-      ...drop,
-      mercyActive: drop.seriesNumber >= MERCY_CONFIGS[drop.shardType].mercyThreshold,
-    }));
+    return drops.map((drop) => {
+      const config =
+        drop.shardType === 'PRIMAL' && drop.rarity === 'LEGENDARY' ? PRIMAL_LEGENDARY_MERCY_CONFIG : MERCY_CONFIGS[drop.shardType];
+      return { ...drop, mercyActive: drop.seriesNumber >= config.mercyThreshold };
+    });
   });
 
-  app.get<{ Params: { shardType: string } }>('/api/champions/:shardType', async (request, reply) => {
-    const { shardType } = request.params;
-    if (!isShardType(shardType)) {
-      return reply.code(400).send({ error: 'Invalid shardType' });
-    }
-    return listChampionsForShardType(shardType);
-  });
+  app.get<{ Params: { shardType: string }; Querystring: { rarity?: string } }>(
+    '/api/champions/:shardType',
+    async (request, reply) => {
+      const { shardType } = request.params;
+      if (!isShardType(shardType)) {
+        return reply.code(400).send({ error: 'Invalid shardType' });
+      }
+      const { rarity } = request.query;
+      const trimmedRarity = rarity === 'LEGENDARY' || rarity === 'MYTHICAL' ? rarity : undefined;
+      return listChampionsForShardType(shardType, trimmedRarity);
+    },
+  );
 }
