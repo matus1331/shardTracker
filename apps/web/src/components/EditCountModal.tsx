@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { ShardType } from '@rsl/mercy-calc';
 
 interface EditCountModalProps {
@@ -43,7 +44,7 @@ export function EditCountModal({ shardType, currentValue, dropFlagLabel, legenda
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-10 flex items-center justify-center bg-black/55" onClick={onClose}>
       <div
         className="w-72 rounded-xl border border-slate-700 bg-slate-900 p-5"
@@ -117,6 +118,7 @@ export function EditCountModal({ shardType, currentValue, dropFlagLabel, legenda
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

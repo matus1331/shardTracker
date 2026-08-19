@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { ShardType } from '@rsl/mercy-calc';
 import { fetchChampionSuggestions } from '../api/dropsClient';
 import { ChampionAutocompleteField } from './ChampionAutocompleteField';
@@ -63,7 +64,7 @@ export function DropCelebrationModal({
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-10 flex items-center justify-center bg-black/55" onClick={onCancel}>
       <div
         className="w-80 rounded-xl border border-slate-700 bg-slate-900 p-6 text-center"
@@ -142,6 +143,7 @@ export function DropCelebrationModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

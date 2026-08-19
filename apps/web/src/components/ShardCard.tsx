@@ -92,14 +92,23 @@ export function ShardCard({ data, onLog, onCorrect, onConfirmDrop }: ShardCardPr
 
   return (
     <div
-      className={`relative overflow-hidden rounded-[22px] bg-slate-900 p-4 sm:p-5 ${
-        isExtraLegendaryEvent
-          ? `border-2 ${EXTRA_LEGENDARY_CARD_ACCENT_CLASS} animate-[pulse_2.4s_ease-in-out_infinite] motion-reduce:animate-none`
-          : isMultiplierEvent
-            ? `border-2 ${meta.eventAccentClass} animate-[pulse_2.4s_ease-in-out_infinite] motion-reduce:animate-none`
-            : 'border border-slate-800'
+      className={`relative overflow-hidden rounded-[22px] bg-slate-900 p-4 sm:p-5 border ${
+        isExtraLegendaryEvent || isMultiplierEvent ? 'border-transparent' : 'border-slate-800'
       }`}
     >
+      {/* Event glow lives on its own overlay (border + shadow only, no fill) so the pulse
+          animates just that ring — not the card's own opacity, which previously dimmed the
+          whole card (content included) and, worse, trapped modals rendered as its DOM
+          descendants inside a new stacking context, making them paint behind later sibling
+          cards. Modals are now portaled to document.body as the permanent fix for that; this
+          keeps the breathing effect where it visually belongs regardless. */}
+      {(isMultiplierEvent || isExtraLegendaryEvent) && (
+        <div
+          className={`pointer-events-none absolute inset-0 rounded-[22px] border-2 animate-[pulse_2.4s_ease-in-out_infinite] motion-reduce:animate-none ${
+            isExtraLegendaryEvent ? EXTRA_LEGENDARY_CARD_ACCENT_CLASS : meta.eventAccentClass
+          }`}
+        />
+      )}
       <div className={`pointer-events-none absolute -top-12 -left-12 h-40 w-40 rounded-full opacity-20 blur-3xl ${meta.fillClass}`} />
 
       <div className="relative mb-3 flex items-center gap-2.5">
