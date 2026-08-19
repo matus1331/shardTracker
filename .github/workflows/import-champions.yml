@@ -1,0 +1,39 @@
+name: Import Champions (production)
+
+# Manual only — never runs on push/PR. Fetches HellHades' champion feed and upserts it into
+# the PRODUCTION Turso database (see packages/server-core/src/scripts/import-champions.ts).
+# Safe to re-run: keyed on hero_id (PRIMARY KEY) via ON CONFLICT DO UPDATE, so it can never
+# create duplicate rows — it only adds new champions and refreshes changed fields on existing
+# ones. It does not delete champions removed from the upstream feed.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "import" to confirm this writes to the PRODUCTION database'
+        required: true
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check confirmation input
+        if: ${{ github.event.inputs.confirm != 'import' }}
+        run: |
+          echo "::error::Confirmation text did not match 'import' — aborting without touching the database."
+          exit 1
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Import champions into production
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          DATABASE_AUTH_TOKEN: ${{ secrets.PROD_DATABASE_AUTH_TOKEN }}
+        run: npm run import-champions -w @rsl/server-core
