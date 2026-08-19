@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # Also builds @rsl/mercy-calc and @rsl/server-core via the root postinstall hook
+      # (see CLAUDE.md "Important workflow gotcha") — a tsc failure in either package
+      # fails this step.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck apps/web
+        run: npx tsc --noEmit -p apps/web
+
+      - name: Typecheck apps/server
+        run: npx tsc --noEmit -p apps/server
+
+      - name: Run mercy-calc test suite
+        run: npm test
+
+      - name: Build apps/web
+        run: npm run build -w @rsl/web
