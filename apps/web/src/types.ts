@@ -27,6 +27,7 @@ export interface ShardCounterState {
 }
 
 export interface DropRecord {
+  id: number;
   shardType: ShardType;
   /** ISO 8601 UTC datetime. */
   createdAt: string;

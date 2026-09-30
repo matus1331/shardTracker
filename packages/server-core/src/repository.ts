@@ -216,6 +216,7 @@ export async function correctSinceLastDrop(
 }
 
 export interface DropRow {
+  id: number;
   shardType: ShardType;
   createdAt: string;
   seriesNumber: number;
@@ -229,6 +230,7 @@ export interface DropRow {
 }
 
 interface RawDropRow {
+  id: number;
   shard_type: ShardType;
   created_at: string;
   since_last_drop_before: number;
@@ -242,7 +244,7 @@ interface RawDropRow {
 
 export async function listDrops(profileId: number): Promise<DropRow[]> {
   const rs = await client.execute({
-    sql: `SELECT sb.shard_type, sb.created_at, sb.since_last_drop_before,
+    sql: `SELECT sb.id, sb.shard_type, sb.created_at, sb.since_last_drop_before,
                  sb.champion_name, c.hellhades_url AS champion_url,
                  sb.extra_champion_name, ec.hellhades_url AS extra_champion_url,
                  sb.rarity,
@@ -262,6 +264,7 @@ export async function listDrops(profileId: number): Promise<DropRow[]> {
     args: [profileId],
   });
   return (rs.rows as unknown as RawDropRow[]).map((row) => ({
+    id: Number(row.id),
     shardType: row.shard_type,
     createdAt: row.created_at,
     seriesNumber: Number(row.since_last_drop_before),
@@ -272,6 +275,48 @@ export async function listDrops(profileId: number): Promise<DropRow[]> {
     eventKind: row.event_kind,
     rarity: row.rarity,
   }));
+}
+
+export interface DropShardInfo {
+  shardType: ShardType;
+  rarity: 'LEGENDARY' | 'MYTHICAL' | null;
+}
+
+/** Ownership + existence check for editing a logged drop — scoped to this profile so one user can't edit another's row. */
+export async function getDropShardInfo(profileId: number, batchId: number): Promise<DropShardInfo | undefined> {
+  const rs = await client.execute({
+    sql: `SELECT shard_type, rarity FROM shard_batches WHERE id = ? AND profile_id = ? AND got_drop = 1`,
+    args: [batchId, profileId],
+  });
+  const row = rs.rows[0] as unknown as { shard_type: ShardType; rarity: 'LEGENDARY' | 'MYTHICAL' | null } | undefined;
+  return row ? { shardType: row.shard_type, rarity: row.rarity } : undefined;
+}
+
+/** Lets a user add/correct the champion name recorded for a past drop, e.g. one logged before they knew what dropped. */
+export async function updateDropChampionName(
+  profileId: number,
+  batchId: number,
+  shardType: ShardType,
+  championName: string | null,
+): Promise<{ championName: string | null; championUrl: string | null }> {
+  let championId: number | null = null;
+  let championUrl: string | null = null;
+  if (championName) {
+    const rs = await client.execute({
+      sql: `SELECT hero_id, hellhades_url FROM champions WHERE ${championPoolWhereClause(shardType)} AND name = ?`,
+      args: [championName],
+    });
+    const row = rs.rows[0] as unknown as { hero_id: number; hellhades_url: string } | undefined;
+    if (row) {
+      championId = Number(row.hero_id);
+      championUrl = row.hellhades_url;
+    }
+  }
+  await client.execute({
+    sql: `UPDATE shard_batches SET champion_name = ?, champion_id = ? WHERE id = ? AND profile_id = ?`,
+    args: [championName, championId, batchId, profileId],
+  });
+  return { championName, championUrl };
 }
 
 /**
