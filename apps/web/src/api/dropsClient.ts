@@ -19,3 +19,15 @@ export function fetchChampionSuggestions(shardType: ShardType, rarity?: 'LEGENDA
     handleDropsResponse<string[]>(res),
   );
 }
+
+export function updateDropChampionName(
+  id: number,
+  championName: string | null,
+): Promise<{ championName: string | null; championUrl: string | null }> {
+  return fetch(`/api/drops/${id}`, {
+    method: 'PATCH',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ championName }),
+  }).then((res) => handleDropsResponse<{ championName: string | null; championUrl: string | null }>(res));
+}

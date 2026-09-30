@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchShards } from '../api/client';
-import { fetchDrops } from '../api/dropsClient';
+import { fetchDrops, updateDropChampionName } from '../api/dropsClient';
 import type { DropRecord, ShardCounterState } from '../types';
 
 export function useHistoryData() {
@@ -17,5 +17,10 @@ export function useHistoryData() {
       .catch((err: Error) => setError(err.message));
   }, []);
 
-  return { drops, counters, error };
+  const updateDropChampion = async (id: number, championName: string | null) => {
+    const result = await updateDropChampionName(id, championName);
+    setDrops((prev) => prev?.map((d) => (d.id === id ? { ...d, ...result } : d)) ?? prev);
+  };
+
+  return { drops, counters, error, updateDropChampion };
 }

@@ -8,7 +8,7 @@ interface HistoryStatsPanelProps {
 }
 
 export function HistoryStatsPanel({ tab }: HistoryStatsPanelProps) {
-  const { drops, counters, error } = useHistoryData();
+  const { drops, counters, error, updateDropChampion } = useHistoryData();
 
   if ((!drops || !counters) && !error) {
     return (
@@ -21,7 +21,13 @@ export function HistoryStatsPanel({ tab }: HistoryStatsPanelProps) {
   return (
     <div>
       {error && <p className="text-sm text-red-400">Nepodařilo se načíst data: {error}</p>}
-      {drops && counters && (tab === 'stats' ? <StatsTab drops={drops} counters={counters} /> : <HistoryTab drops={drops} />)}
+      {drops && counters && (
+        tab === 'stats' ? (
+          <StatsTab drops={drops} counters={counters} />
+        ) : (
+          <HistoryTab drops={drops} onChampionUpdated={updateDropChampion} />
+        )
+      )}
     </div>
   );
 }
