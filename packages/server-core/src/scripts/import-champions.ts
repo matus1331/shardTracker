@@ -15,6 +15,7 @@ import { upsertChampions, type ChampionImportRow } from '../repository.js';
 const CHAMPIONS_ENDPOINT = 'https://hellhades.com/wp-json/hh-api/v3/champions?mode=full&faction=';
 
 interface HellHadesChampion {
+  id?: string;
   heroId?: number;
   champion?: string;
   shortname?: string;
@@ -30,11 +31,15 @@ interface HellHadesResponse {
 }
 
 function toImportRow(c: HellHadesChampion): ChampionImportRow | null {
-  if (!c.heroId || !c.champion || !c.url) return null;
+  // ponytail: HellHades sends heroId:0 for champions it hasn't assigned a real
+  // hero id yet (brand-new additions). Fall back to their WP post `id`, which
+  // is unique and in a disjoint numeric range (80000+ vs real heroIds <11000).
+  const heroId = c.heroId || Number(c.id);
+  if (!heroId || !c.champion || !c.url) return null;
   const rarity = c.rarity?.toUpperCase();
   if (rarity !== 'LEGENDARY' && rarity !== 'MYTHICAL') return null;
   return {
-    heroId: c.heroId,
+    heroId,
     name: c.champion,
     shortname: c.shortname ?? c.champion,
     rarity,
